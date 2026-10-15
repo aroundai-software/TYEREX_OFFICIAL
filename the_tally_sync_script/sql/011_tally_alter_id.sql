@@ -1,0 +1,2 @@
+-- Not used. Tally AlterID is read from Tally only and remembered next to the exe
+-- in tally_alter_ids.json. Do not add alter_id columns to the database.

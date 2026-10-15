@@ -1,0 +1,1730 @@
+[
+  {
+    "name": "1st Floor Renovation",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000014a"
+  },
+  {
+    "name": "A1 Travels and Speed Parcel Service",
+    "parent": "Creditors -Other",
+    "closing_balance": "1,050.84",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001d75"
+  },
+  {
+    "name": "ABDUL SALAM (THRISSUR)",
+    "parent": "Current Liabilities",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000023e9"
+  },
+  {
+    "name": "Abhijith Mess",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "1,450.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000386"
+  },
+  {
+    "name": "Abhijith V R ( Staff)",
+    "parent": "Salary &amp; Wages",
+    "closing_balance": "4,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000c6f"
+  },
+  {
+    "name": "AC SERIVCE",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "8,225.30",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001de2"
+  },
+  {
+    "name": "Adhil (Mess)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000140"
+  },
+  {
+    "name": "Advertisement",
+    "parent": "Indirect Expenses",
+    "closing_balance": "9,172.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000aa6"
+  },
+  {
+    "name": "ALLOY BEND / PATCH",
+    "parent": "Service Income",
+    "closing_balance": "3,449.16",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000116"
+  },
+  {
+    "name": "Alloy Painiting",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000011f5"
+  },
+  {
+    "name": "ALWIN (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "2,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001e8f"
+  },
+  {
+    "name": "AMAL DAS (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "120.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001f0c"
+  },
+  {
+    "name": "ANANTHU (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001c3e"
+  },
+  {
+    "name": "Apollo Electrical Home Appliances",
+    "parent": "Creditors- Expense",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001ac4"
+  },
+  {
+    "name": "Asianet Internet",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000011fa"
+  },
+  {
+    "name": "ATHUL (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001c3d"
+  },
+  {
+    "name": "AUTO CHARGE",
+    "parent": "Transporation &amp; Frieght",
+    "closing_balance": "10,341.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000143"
+  },
+  {
+    "name": "AVINASH (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000020f3"
+  },
+  {
+    "name": "Bineesh - Mess",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000206"
+  },
+  {
+    "name": "Bineesh (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000003ae"
+  },
+  {
+    "name": "BINI (STAFF)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "14,675.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000237"
+  },
+  {
+    "name": "BIPIN (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000228b"
+  },
+  {
+    "name": "Bni Membership Fees",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001615"
+  },
+  {
+    "name": "Board Work",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "77,800.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000ccb"
+  },
+  {
+    "name": "Branch Inaguration Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "5,331.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000022bd"
+  },
+  {
+    "name": "Branch Sales",
+    "parent": "Sales Accounts",
+    "closing_balance": "",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000020a6"
+  },
+  {
+    "name": "Building Insurance",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b43"
+  },
+  {
+    "name": "CAR WASH",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000155c"
+  },
+  {
+    "name": "CGST OUTPUT",
+    "parent": "Duties &amp; Taxes",
+    "closing_balance": "1,56,08,075.15",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000000df"
+  },
+  {
+    "name": "Cleaning Exepenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "25,150.17",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000242"
+  },
+  {
+    "name": "Cochin Business Training Services Private Limited",
+    "parent": "Creditors- Expense",
+    "closing_balance": "0.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001614"
+  },
+  {
+    "name": "COMMISSION PAID",
+    "parent": "Indirect Expenses",
+    "closing_balance": "4,858.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002c5"
+  },
+  {
+    "name": "Commission Received",
+    "parent": "Indirect Incomes",
+    "closing_balance": "7,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001e3a"
+  },
+  {
+    "name": "Computer India (Stationary)",
+    "parent": "Creditors- Expense",
+    "closing_balance": "50.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000205"
+  },
+  {
+    "name": "Consultancy Charges",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000368"
+  },
+  {
+    "name": "Corporation License",
+    "parent": "Statutory and Legal Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000d79"
+  },
+  {
+    "name": "Courier Charge",
+    "parent": "Indirect Expenses",
+    "closing_balance": "2,102.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000087c"
+  },
+  {
+    "name": "Customer Food Bill",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,06,524.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000167d"
+  },
+  {
+    "name": "DAILY EXPRESS LLP",
+    "parent": "Transporation &amp; Frieght",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000cfc"
+  },
+  {
+    "name": "Delco Marine Enterprises",
+    "parent": "Creditors -Other",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b47"
+  },
+  {
+    "name": "Dileep (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000020f6"
+  },
+  {
+    "name": "DIO INSURANCE",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000014ac"
+  },
+  {
+    "name": "Directors Food Bill",
+    "parent": "Indirect Expenses",
+    "closing_balance": "2,063.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001f49"
+  },
+  {
+    "name": "Discount Allowed",
+    "parent": "Indirect Expenses",
+    "closing_balance": "4,56,728.63",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000056c"
+  },
+  {
+    "name": "Discount Allowed -Sales",
+    "parent": "Sales Accounts",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001efc"
+  },
+  {
+    "name": "Discount Received",
+    "parent": "Indirect Incomes",
+    "closing_balance": "1,19,102.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000018fe"
+  },
+  {
+    "name": "Donation",
+    "parent": "Indirect Expenses",
+    "closing_balance": "770.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000004ff"
+  },
+  {
+    "name": "ECCO INSURANCE",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000016f9"
+  },
+  {
+    "name": "Electrical Fitting",
+    "parent": "Fixed Assets",
+    "closing_balance": "19,849.73",
+    "gst_type": "Goods",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001ac8"
+  },
+  {
+    "name": "Ergo Consulting Services ,India,Pvt.Ltd.",
+    "parent": "Creditors- Expense",
+    "closing_balance": "8.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000fd2"
+  },
+  {
+    "name": "ESI,PF Registration",
+    "parent": "Indirect Expenses",
+    "closing_balance": "15,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000211e"
+  },
+  {
+    "name": "Fast and Elastic Marketing Service (FEMS)",
+    "parent": "Creditors- Expense",
+    "closing_balance": "17.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000201"
+  },
+  {
+    "name": "Festival Expense",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,12,450.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000692"
+  },
+  {
+    "name": "FOOD EXPENSES STAFF",
+    "parent": "Direct Expenses",
+    "closing_balance": "1,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000139b"
+  },
+  {
+    "name": "Franchise Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000092b"
+  },
+  {
+    "name": "Franchise Salary",
+    "parent": "Sales Accounts",
+    "closing_balance": "2,68,749.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001e25"
+  },
+  {
+    "name": "FREIGHT CHARGE",
+    "parent": "Transporation &amp; Frieght",
+    "closing_balance": "1,78,234.46",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000001fe"
+  },
+  {
+    "name": "Fuel Expenses -Bike",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "16,900.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000014c"
+  },
+  {
+    "name": "Fuel Expenses -Dio Scooter",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "7,483.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000135e"
+  },
+  {
+    "name": "Fuel Expenses - Ecco",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "85,610.20",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000013d9"
+  },
+  {
+    "name": "Fuel Expenses -Fiesta",
+    "parent": "Indirect Expenses",
+    "closing_balance": "3,100.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000025f3"
+  },
+  {
+    "name": "Fuel Expenses -Generator",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "7,520.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000013d"
+  },
+  {
+    "name": "Fuel Expenses -Swift",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "2,500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000014b"
+  },
+  {
+    "name": "Fuel Expenses - Volvo",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "4,099.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000011e5"
+  },
+  {
+    "name": "Fuel Expense TCR",
+    "parent": "Petrol &amp; Diesel Expense",
+    "closing_balance": "500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00002407"
+  },
+  {
+    "name": "GENERATOR AMC",
+    "parent": "Indirect Expenses",
+    "closing_balance": "5,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001c7d"
+  },
+  {
+    "name": "GLOVES",
+    "parent": "Service Consumable",
+    "closing_balance": "1,828.80",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002ac"
+  },
+  {
+    "name": "Greatleap Services Private Limited",
+    "parent": "Creditors -Other",
+    "closing_balance": "5,900.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000211d"
+  },
+  {
+    "name": "GST Amendment",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001e60"
+  },
+  {
+    "name": "GST EXPENSE",
+    "parent": "Purchase Accounts",
+    "closing_balance": "34,297.18",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000fd0"
+  },
+  {
+    "name": "GST FILING FEES",
+    "parent": "Indirect Expenses",
+    "closing_balance": "6,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b76"
+  },
+  {
+    "name": "GST PAYABLE",
+    "parent": "Duties &amp; Taxes",
+    "closing_balance": "5,48,551.48",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001a07"
+  },
+  {
+    "name": "GST Purchase",
+    "parent": "Purchase Accounts",
+    "closing_balance": "7,20,33,464.89",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000121"
+  },
+  {
+    "name": "GST SALES",
+    "parent": "Sales Accounts",
+    "closing_balance": "7,70,17,277.21",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000000cd"
+  },
+  {
+    "name": "HUB RING EXPENSE",
+    "parent": "Indirect Expenses",
+    "closing_balance": "5,200.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000200"
+  },
+  {
+    "name": "Hub Ring Income",
+    "parent": "Shop Other Income",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002bd"
+  },
+  {
+    "name": "IDEAL OFFICE STATIONERY",
+    "parent": "Creditors- Expense",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00002532"
+  },
+  {
+    "name": "Interest &amp; Late Fee",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,259.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000d7a"
+  },
+  {
+    "name": "Interest &amp; Late Fee- GST",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000855"
+  },
+  {
+    "name": "INTEREST ON LOAN",
+    "parent": "Indirect Expenses",
+    "closing_balance": "53,800.80",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000174b"
+  },
+  {
+    "name": "Interest  Received",
+    "parent": "Indirect Incomes",
+    "closing_balance": "6,402.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000c42"
+  },
+  {
+    "name": "INTERNET TCR",
+    "parent": "TELEPHONE &amp; INTERNET",
+    "closing_balance": "1,523.82",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000023e5"
+  },
+  {
+    "name": "Jeffin (Mess)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000169b"
+  },
+  {
+    "name": "Jintu (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000004e0"
+  },
+  {
+    "name": "Jio Internet",
+    "parent": "TELEPHONE &amp; INTERNET",
+    "closing_balance": "23,462.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000055f"
+  },
+  {
+    "name": "JIO PLATFORMS LIMITES",
+    "parent": "Creditors -Other",
+    "closing_balance": "1,594.06",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001d8d"
+  },
+  {
+    "name": "Jomon (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000005d3"
+  },
+  {
+    "name": "Kichu (Mess)",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000346"
+  },
+  {
+    "name": "Kichu (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "8,989.46",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000003dc"
+  },
+  {
+    "name": "Kiran Salary",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "66,170.51",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000090a"
+  },
+  {
+    "name": "KSEB BILL",
+    "parent": "Indirect Expenses",
+    "closing_balance": "2,08,726.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000082a"
+  },
+  {
+    "name": "LABOUR REGISTRATION",
+    "parent": "Indirect Expenses",
+    "closing_balance": "2,144.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00002242"
+  },
+  {
+    "name": "Leagal Expeses",
+    "parent": "Statutory and Legal Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002b6"
+  },
+  {
+    "name": "Leave Salary",
+    "parent": "Salary &amp; Wages",
+    "closing_balance": "56,376.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000005e6"
+  },
+  {
+    "name": "LEGAL EXPENSES",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000489"
+  },
+  {
+    "name": "LEO (MESS)",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000006bd"
+  },
+  {
+    "name": "Loading &amp; Unloading",
+    "parent": "Transporation &amp; Frieght",
+    "closing_balance": "3,470.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000142"
+  },
+  {
+    "name": "Loss of Pay (Incentive)",
+    "parent": "Salary &amp; Wages",
+    "closing_balance": "19,987.37",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000015db"
+  },
+  {
+    "name": "Loss of Pay (Mess)",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "65,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000005cb"
+  },
+  {
+    "name": "Loss of Pay (Salary)",
+    "parent": "Salary &amp; Wages",
+    "closing_balance": "5,22,724.49",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000005c8"
+  },
+  {
+    "name": "Make My Trip India Pvt Ltd",
+    "parent": "Creditors -Other",
+    "closing_balance": "38,572.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001fc4"
+  },
+  {
+    "name": "Manikandan (Mess)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "4,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000020f0"
+  },
+  {
+    "name": "MARKETING EXPENSES",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000916"
+  },
+  {
+    "name": "Medicine Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,849.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b7a"
+  },
+  {
+    "name": "MIDHUN (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "1,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000020d"
+  },
+  {
+    "name": "Midhun (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "12,983.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000c5c"
+  },
+  {
+    "name": "MOBILE PHONE BILL",
+    "parent": "TELEPHONE &amp; INTERNET",
+    "closing_balance": "20,482.92",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000003d1"
+  },
+  {
+    "name": "Monthly Payroll Management Services",
+    "parent": "Indirect Expenses",
+    "closing_balance": "10,000.00",
+    "gst_type": "Goods",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000022c6"
+  },
+  {
+    "name": "Munna (Mess)",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001a55"
+  },
+  {
+    "name": "NAJAD - MESS",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000001fd"
+  },
+  {
+    "name": "NAZEER TYREX 2 (RENT)",
+    "parent": "Current Liabilities",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001b7f"
+  },
+  {
+    "name": "News Paper",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002e2"
+  },
+  {
+    "name": "Nitrogen Topup &amp; Filling",
+    "parent": "Service Income",
+    "closing_balance": "22,313.55",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000013b"
+  },
+  {
+    "name": "Office Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "26,055.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000241"
+  },
+  {
+    "name": "PATCH EXPENSES &amp; Alloy Bend",
+    "parent": "Indirect Expenses",
+    "closing_balance": "4,300.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000001ff"
+  },
+  {
+    "name": "Point S India Pvt Ltd",
+    "parent": "Creditors -Tyre &amp; Alloy",
+    "closing_balance": "3,421.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000227a"
+  },
+  {
+    "name": "POWER ZONE GENERATOR BATTERY-PZ800R",
+    "parent": "Generator Service",
+    "closing_balance": "",
+    "gst_type": "Goods",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b78"
+  },
+  {
+    "name": "Printing &amp; Stationary",
+    "parent": "Indirect Expenses",
+    "closing_balance": "44,253.05",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000204"
+  },
+  {
+    "name": "Promotional Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "29,200.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000e32"
+  },
+  {
+    "name": "PROMOTION EXPENSES",
+    "parent": "Indirect Expenses",
+    "closing_balance": "4,64,150.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000e1d"
+  },
+  {
+    "name": "PROMPT TECHNOLOGIES",
+    "parent": "Creditors -Other",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002c6"
+  },
+  {
+    "name": "Punture",
+    "parent": "Service Income",
+    "closing_balance": "45,512.38",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000000d7"
+  },
+  {
+    "name": "QUALITY ENTERPRISES",
+    "parent": "Creditors -Other",
+    "closing_balance": "7,760.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000036a"
+  },
+  {
+    "name": "Rechargeble Corless Jet Cleaning",
+    "parent": "Indirect Expenses",
+    "closing_balance": "3,500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001bb6"
+  },
+  {
+    "name": "Red Caspian",
+    "parent": "Creditors- Expense",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001a5c"
+  },
+  {
+    "name": "REGISTRATION FEES",
+    "parent": "Indirect Expenses",
+    "closing_balance": "5,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000227e"
+  },
+  {
+    "name": "Rental Car Swift",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000d3e"
+  },
+  {
+    "name": "Rent (Shop)",
+    "parent": "Rent Expenses",
+    "closing_balance": "17,50,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000659"
+  },
+  {
+    "name": "Rent Staff Room",
+    "parent": "Rent Expenses",
+    "closing_balance": "1,00,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000007fb"
+  },
+  {
+    "name": "REPAIRS AND MAINTANCE BUILDING",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "1,07,181.02",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000121e"
+  },
+  {
+    "name": "Repairs and Maintenance Electrical",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "10,827.42",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000373"
+  },
+  {
+    "name": "Repairs and Maintenance -Swift",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000004c9"
+  },
+  {
+    "name": "Repairs and Maintenance  Vehicle",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "60,516.88",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001763"
+  },
+  {
+    "name": "Repairs &amp; Maintenance Computer",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "2,321.15",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002b8"
+  },
+  {
+    "name": "Repairs &amp; Maintenance Machinery",
+    "parent": "Repairs &amp; Maintanance",
+    "closing_balance": "13,044.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000003d7"
+  },
+  {
+    "name": "ROTATION",
+    "parent": "Service Income",
+    "closing_balance": "18,228.93",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000001b1"
+  },
+  {
+    "name": "Royalty",
+    "parent": "Sales Accounts",
+    "closing_balance": "2,49,397.68",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000a3a"
+  },
+  {
+    "name": "Sai Service Private Limited",
+    "parent": "Creditors- Expense",
+    "closing_balance": "68.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000234a"
+  },
+  {
+    "name": "SAJEEV (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "2,500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001c50"
+  },
+  {
+    "name": "Sajith (Mess )",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "1,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001b43"
+  },
+  {
+    "name": "Salary to Key Management",
+    "parent": "Salary &amp; Wages",
+    "closing_balance": "11,50,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000909"
+  },
+  {
+    "name": "Salary to Staff",
+    "parent": "Salary &amp; Wages",
+    "closing_balance": "34,37,700.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000005c7"
+  },
+  {
+    "name": "SARAN (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "4,620.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000020ef"
+  },
+  {
+    "name": "SERVICE",
+    "parent": "Service Income",
+    "closing_balance": "1,04,360.12",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000236"
+  },
+  {
+    "name": "Service Charge",
+    "parent": "Indirect Expenses",
+    "closing_balance": "501.70",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001d8b"
+  },
+  {
+    "name": "Service Consumables 5%",
+    "parent": "Indirect Expenses",
+    "closing_balance": "5,925.36",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001eed"
+  },
+  {
+    "name": "Service Consumbles",
+    "parent": "Service Expenses",
+    "closing_balance": "1,09,801.98",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000247"
+  },
+  {
+    "name": "SERVICE RECEIVED",
+    "parent": "Service Expenses",
+    "closing_balance": "16,755.15",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001c8b"
+  },
+  {
+    "name": "Shibil - Mess",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000244"
+  },
+  {
+    "name": "Shop Other Income",
+    "parent": "Indirect Incomes",
+    "closing_balance": "4,584.27",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001db1"
+  },
+  {
+    "name": "SOURAV (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000022ec"
+  },
+  {
+    "name": "SPACER",
+    "parent": "Shop Other Income",
+    "closing_balance": "2,203.39",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000001d5"
+  },
+  {
+    "name": "SPACER -Sales",
+    "parent": "Sales Accounts",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001efd"
+  },
+  {
+    "name": "SPECTRUM TYRES &amp; SERVICES INDIA PVT LTD",
+    "parent": "Creditors -Tyre &amp; Alloy",
+    "closing_balance": "38,200.00",
+    "gst_type": "",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002ee"
+  },
+  {
+    "name": "Staff Incentive",
+    "parent": "Indirect Expenses",
+    "closing_balance": "2,37,840.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000cb1"
+  },
+  {
+    "name": "Staff Lunch",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "90,628.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001d6c"
+  },
+  {
+    "name": "Staff Mess Expenses",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "1,96,580.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000005ca"
+  },
+  {
+    "name": "Staff Other Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "38,100.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000385"
+  },
+  {
+    "name": "Staff Rent Payable",
+    "parent": "Current Liabilities",
+    "closing_balance": "1,10,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000007fc"
+  },
+  {
+    "name": "Staff Tea Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,08,663.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000243"
+  },
+  {
+    "name": "Staff Tyre Cleaning",
+    "parent": "Indirect Expenses",
+    "closing_balance": "24,350.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000004c7"
+  },
+  {
+    "name": "STICKER WEIGHT",
+    "parent": "Service Consumable",
+    "closing_balance": "77,825.72",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b7c"
+  },
+  {
+    "name": "Sticker Weight Income",
+    "parent": "Indirect Incomes",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001e3b"
+  },
+  {
+    "name": "Sudhakar -Mess",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "2,300.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000021c"
+  },
+  {
+    "name": "SUMEESH (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "5,920.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000020f4"
+  },
+  {
+    "name": "Tally AMC",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001047"
+  },
+  {
+    "name": "Tally Service",
+    "parent": "Indirect Expenses",
+    "closing_balance": "44,650.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000762"
+  },
+  {
+    "name": "TCR STAFF ROOM RENT",
+    "parent": "Rent Expenses",
+    "closing_balance": "5,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000252b"
+  },
+  {
+    "name": "TDS Payable",
+    "parent": "TDS Payable",
+    "closing_balance": "66,331.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000065b"
+  },
+  {
+    "name": "TDS RETURN FILING FEES",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000013c5"
+  },
+  {
+    "name": "THRISSUR RENT",
+    "parent": "Rent Expenses",
+    "closing_balance": "1,40,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000023e8"
+  },
+  {
+    "name": "Tire Paste 5kg White",
+    "parent": "Service Consumable",
+    "closing_balance": "950.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000a7f"
+  },
+  {
+    "name": "Tools",
+    "parent": "Service Consumable",
+    "closing_balance": "20,756.66",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000b48"
+  },
+  {
+    "name": "Training Center Expense",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000f0c"
+  },
+  {
+    "name": "Travelling Expenses",
+    "parent": "Indirect Expenses",
+    "closing_balance": "1,68,408.13",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000345"
+  },
+  {
+    "name": "Tyre Fitting",
+    "parent": "Service Income",
+    "closing_balance": "84,156.74",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000104"
+  },
+  {
+    "name": "TYRE POLISH",
+    "parent": "Indirect Expenses",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000176e"
+  },
+  {
+    "name": "Tyre Rotation",
+    "parent": "Service Income",
+    "closing_balance": "",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000006d0"
+  },
+  {
+    "name": "TYREX 2 KSEB",
+    "parent": "Indirect Expenses",
+    "closing_balance": "13,001.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000019e6"
+  },
+  {
+    "name": "Tyrex 2 Other Expense",
+    "parent": "Indirect Expenses",
+    "closing_balance": "59,189.28",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001af4"
+  },
+  {
+    "name": "TYREX 2 RENT",
+    "parent": "Rent Expenses",
+    "closing_balance": "1,65,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00001b7e"
+  },
+  {
+    "name": "UNDERGROUND",
+    "parent": "Creditors -Tyre &amp; Alloy",
+    "closing_balance": "1,08,500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000003dd"
+  },
+  {
+    "name": "VIPIN (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "4,100.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00002112"
+  },
+  {
+    "name": "VISHNU EV MESS",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "1,000.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000265e"
+  },
+  {
+    "name": "VISHNU -MESS",
+    "parent": "Staff Welfare Expenses",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000013f"
+  },
+  {
+    "name": "VISHNU NEW (MESS)",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-0000228a"
+  },
+  {
+    "name": "Vishnu (Staff)",
+    "parent": "Staff Salary Payable",
+    "closing_balance": "0.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00000362"
+  },
+  {
+    "name": "Waste",
+    "parent": "Indirect Expenses",
+    "closing_balance": "8,540.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000002b7"
+  },
+  {
+    "name": "WATER BILL",
+    "parent": "Indirect Expenses",
+    "closing_balance": "26,050.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000007a4"
+  },
+  {
+    "name": "Wheel Alignment",
+    "parent": "Service Income",
+    "closing_balance": "19,17,546.57",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000000d5"
+  },
+  {
+    "name": "Wheel Balancing",
+    "parent": "Service Income",
+    "closing_balance": "17,26,663.53",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-000000d6"
+  },
+  {
+    "name": "YADHU -MESS",
+    "parent": "MESS PAYABLE",
+    "closing_balance": "2,500.00",
+    "gst_type": "Services",
+    "hsn": "",
+    "gst_rate": "",
+    "guid": "0840cbde-277a-44a0-8517-9885536c6064-00002289"
+  }
+]
