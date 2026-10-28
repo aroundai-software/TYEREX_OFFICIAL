@@ -578,35 +578,66 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.insights_rounded, size: 18, color: Color(0xFF4F46E5)),
+                              ),
+                              const SizedBox(width: 8),
+                              const Flexible(
+                                child: Text(
+                                  'Consolidated Overview',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.3,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (!_isLoadingMetrics)
+                          InkWell(
+                            onTap: () {
+                              HapticUtils.light();
+                              _navigateTo(context, const ReportsAnalyticsScreen());
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFF4F46E5).withValues(alpha: 0.25)),
                               ),
-                              child: const Icon(Icons.insights_rounded, size: 18, color: Color(0xFF4F46E5)),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Consolidated Overview',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
-                                letterSpacing: -0.3,
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.analytics_rounded, size: 14, color: Color(0xFF4F46E5)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Reports & Analytics',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF4F46E5),
+                                    ),
+                                  ),
+                                  SizedBox(width: 2),
+                                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFF4F46E5)),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        if (!_isLoadingMetrics)
-                          Text(
-                            DateFormat('dd MMM yyyy').format(DateTime.now()),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
                             ),
                           ),
                       ],
@@ -658,6 +689,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         icon: Icons.currency_rupee_rounded,
                                         color: const Color(0xFF059669),
                                         bgColor: const Color(0xFFECFDF5),
+                                        onTap: () {
+                                          HapticUtils.light();
+                                          _navigateTo(context, const ReportsAnalyticsScreen());
+                                        },
                                       ),
                                       _buildMetricCard(
                                         width: cardWidth,
@@ -702,28 +737,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0284C7).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.domain_rounded, size: 18, color: Color(0xFF0284C7)),
                                 ),
-                                child: const Icon(Icons.domain_rounded, size: 18, color: Color(0xFF0284C7)),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Branch-Wise Analysis',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
-                                  letterSpacing: -0.3,
+                                const SizedBox(width: 8),
+                                const Flexible(
+                                  child: Text(
+                                    'Branch-Wise Analysis',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                      letterSpacing: -0.3,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -828,9 +870,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 _buildDashboardCard(
                                   context,
                                   width: itemWidth,
-                                  title: 'Reports & History',
-                                  subtitle: 'Job records & search',
-                                  icon: Icons.assessment_rounded,
+                                  title: 'Reports & Analytics',
+                                  subtitle: 'Job cards, branch-wise, revenue & customers',
+                                  icon: Icons.analytics_rounded,
                                   color: const Color(0xFF0284C7),
                                   onTap: () {
                                     HapticUtils.light();

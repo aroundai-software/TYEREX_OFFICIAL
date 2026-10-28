@@ -11,6 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+LIB-BACKUP/
 Thumbs.db
 
 # ─── IDE / Editor ─────────────────────────────────────────────────────────────
@@ -63,6 +64,11 @@ firebase-adminsdk*.json
 .env.*
 *.env
 tyrexGdriveSecrtes.txt
+key.properties
+android/key.properties
+*.jks
+*.keystore
+android/app/*.jks
 
 # Supabase local config secrets
 supabase/.temp/

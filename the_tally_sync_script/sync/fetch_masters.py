@@ -6,7 +6,7 @@ import sys
 import requests
 
 from sync.config import tally_url
-from sync import alter_cache, app_catalog, supabase_rest, tally_ledgers, tally_stock, tally_xml
+from sync import alter_cache, app_catalog, supabase_rest, tally_ledgers, tally_sales, tally_stock, tally_xml
 
 
 def _ensure_companies() -> list[dict]:
@@ -22,9 +22,15 @@ def _ensure_companies() -> list[dict]:
     return supabase_rest.list_company_masters()
 
 
-def _project_app_tables(items: list[dict], ledgers: list[dict], master: dict) -> tuple[int, int, int, int]:
+def _project_app_tables(
+    items: list[dict],
+    ledgers: list[dict],
+    sales_rows: list[dict] | None,
+    master: dict,
+) -> tuple[int, int, int, int, int]:
     owners = 0
     tyres = alloys = materials = 0
+    services = 0
     try:
         owners = supabase_rest.upsert_owners_from_ledgers(ledgers, master)
         print(f"  owner_master: {owners} owner(s) created/updated", flush=True)
@@ -38,7 +44,13 @@ def _project_app_tables(items: list[dict], ledgers: list[dict], master: dict) ->
         )
     except Exception as exc:  # noqa: BLE001
         print(f"  app catalog save failed: {exc}", flush=True)
-    return owners, tyres, alloys, materials
+    if sales_rows:
+        try:
+            services = supabase_rest.upsert_service_catalog_from_sales(sales_rows, master)
+            print(f"  service_catalog: {services} service(s) saved", flush=True)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  service_catalog save failed: {exc}", flush=True)
+    return owners, tyres, alloys, materials, services
 
 
 def project_saved(company_name: str | None = None) -> int:
@@ -52,15 +64,16 @@ def project_saved(company_name: str | None = None) -> int:
         name = master.get("tally_company_name") or "?"
         items = supabase_rest.list_saved_stock_items(master)
         ledgers = supabase_rest.list_saved_ledgers(master)
+        sales_rows = supabase_rest.list_saved_sales_accounts(master)
         print(
             f"Filling app tables from saved Tally data for {name}: "
-            f"{len(items)} stock, {len(ledgers)} ledgers ...",
+            f"{len(items)} stock, {len(ledgers)} ledgers, {len(sales_rows)} sales accounts ...",
             flush=True,
         )
-        if not items and not ledgers:
+        if not items and not ledgers and not sales_rows:
             print("  nothing saved for this company.", flush=True)
             continue
-        _project_app_tables(items, ledgers, master)
+        _project_app_tables(items, ledgers, sales_rows, master)
     return 0
 
 
@@ -75,10 +88,12 @@ def run(dry_run: bool = False, company_name: str | None = None) -> int:
 
     total_stock = 0
     total_ledgers = 0
+    total_sales = 0
     total_owners = 0
     total_tyres = 0
     total_alloys = 0
     total_materials = 0
+    total_services = 0
 
     for master in masters:
         name = master.get("tally_company_name")
@@ -100,9 +115,25 @@ def run(dry_run: bool = False, company_name: str | None = None) -> int:
             row["tally_company_guid"] = master.get("tally_guid")
         print(f"  {len(ledgers)} party ledger(s).", flush=True)
 
-        if not items and not ledgers:
-            print("  Tally returned no stock/ledgers for this company; skipping.", flush=True)
+        print("  Sales & service accounts (Sales Accounts / Service Income)...", flush=True)
+        sales = tally_sales.fetch_sales_from_tally(name)
+        for row in sales:
+            row["tally_company_id"] = master.get("id")
+            row["tally_company_guid"] = master.get("tally_guid")
+        print(f"  {len(sales)} sales/service account(s).", flush=True)
+
+        if not items and not ledgers and not sales:
+            print("  Tally returned no stock/ledgers/sales for this company; skipping.", flush=True)
             continue
+
+        if not dry_run and sales:
+            try:
+                saved_sales = supabase_rest.upsert_sales_accounts(sales)
+                print(f"  upserted {saved_sales} row(s) in tally_sales_accounts", flush=True)
+                total_sales += saved_sales
+            except Exception as exc:  # noqa: BLE001
+                print(f"  tally_sales_accounts save failed: {exc}", flush=True)
+                print("  Run sql/005_tally_sales_accounts.sql.", flush=True)
 
         stock_guids = supabase_rest.list_saved_guids(supabase_rest.STOCK_TABLE, master)
         ledger_guids = supabase_rest.list_saved_guids(supabase_rest.LEDGER_TABLE, master)
@@ -131,7 +162,7 @@ def run(dry_run: bool = False, company_name: str | None = None) -> int:
                 kinds[app_catalog.classify_stock(item)] += 1
             print(
                 f"  dry-run write: {kinds['tyre']} tyre, {kinds['alloy']} alloy, "
-                f"{kinds['other']} other, {len(write_ledgers)} owners"
+                f"{kinds['other']} other, {len(write_ledgers)} owners, {len(sales)} services"
             )
             continue
 
@@ -142,40 +173,40 @@ def run(dry_run: bool = False, company_name: str | None = None) -> int:
             remembered = alter_cache.remember(supabase_rest.LEDGER_TABLE, seen_ledgers, master)
             print(f"  remembered Tally AlterID for {remembered} already-synced ledger(s)", flush=True)
 
-        if not write_items and not write_ledgers:
-            print("  nothing new or AlterID-changed. Already synced rows left as-is.", flush=True)
-            continue
+        if write_items:
+            try:
+                saved = supabase_rest.upsert_stock_items(write_items)
+                print(f"  upserted {saved} row(s) in tally_stock_items", flush=True)
+                total_stock += saved
+                alter_cache.remember(supabase_rest.STOCK_TABLE, write_items, master)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  tally_stock_items save failed: {exc}", flush=True)
+                print("  Run sql/003_tally_stock_items.sql and sql/004_stock_upsert_guid.sql.", flush=True)
 
-        try:
-            saved = supabase_rest.upsert_stock_items(write_items)
-            print(f"  upserted {saved} row(s) in tally_stock_items", flush=True)
-            total_stock += saved
-            alter_cache.remember(supabase_rest.STOCK_TABLE, write_items, master)
-        except Exception as exc:  # noqa: BLE001
-            print(f"  tally_stock_items save failed: {exc}", flush=True)
-            print("  Run sql/003_tally_stock_items.sql and sql/004_stock_upsert_guid.sql.", flush=True)
+        if write_ledgers:
+            try:
+                saved = supabase_rest.upsert_ledgers(write_ledgers)
+                print(f"  upserted {saved} row(s) in tally_ledgers", flush=True)
+                total_ledgers += saved
+                alter_cache.remember(supabase_rest.LEDGER_TABLE, write_ledgers, master)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  tally_ledgers save failed: {exc}", flush=True)
+                print("  Run sql/009_tally_ledgers.sql.", flush=True)
 
-        try:
-            saved = supabase_rest.upsert_ledgers(write_ledgers)
-            print(f"  upserted {saved} row(s) in tally_ledgers", flush=True)
-            total_ledgers += saved
-            alter_cache.remember(supabase_rest.LEDGER_TABLE, write_ledgers, master)
-        except Exception as exc:  # noqa: BLE001
-            print(f"  tally_ledgers save failed: {exc}", flush=True)
-            print("  Run sql/009_tally_ledgers.sql.", flush=True)
-
-        owners, tyres, alloys, materials = _project_app_tables(write_items, write_ledgers, master)
+        owners, tyres, alloys, materials, services = _project_app_tables(write_items, write_ledgers, sales, master)
         total_owners += owners
         total_tyres += tyres
         total_alloys += alloys
         total_materials += materials
+        total_services += services
 
     if dry_run:
         print("Dry run: nothing written to Supabase.")
         return 0
     print(
-        f"Done. stock={total_stock} ledgers={total_ledgers} owners={total_owners} "
-        f"tyres={total_tyres} alloys={total_alloys} materials={total_materials}"
+        f"Done. stock={total_stock} ledgers={total_ledgers} sales_accounts={total_sales} "
+        f"owners={total_owners} tyres={total_tyres} alloys={total_alloys} "
+        f"materials={total_materials} services={total_services}"
     )
     return 0
 

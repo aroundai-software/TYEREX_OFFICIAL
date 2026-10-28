@@ -24,6 +24,7 @@ import '../services/local_media_service.dart';
 import '../utils/date_utils.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
+import '../utils/file_download_helper.dart';
 
 // Assuming DamagePainter is in a shared file or defined elsewhere.
 // If not, you can copy the DamagePainter class from job_card_screen.dart to here.
@@ -374,6 +375,21 @@ class _ReportScreenState extends State<ReportScreen> {
         ..setAttribute('download', filename)
         ..click();
       html.Url.revokeObjectUrl(url);
+    } else if (FileDownloadHelper.isDesktop) {
+      final path = await FileDownloadHelper.saveFileToDownloads(fileName: filename, bytes: bytes);
+      FileDownloadHelper.openInFileManager(path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saved to Downloads: $filename'),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Open',
+              onPressed: () => FileDownloadHelper.openInFileManager(path),
+            ),
+          ),
+        );
+      }
     } else {
       final dir = await getTemporaryDirectory();
       final file = io.File('${dir.path}/$filename');
@@ -385,19 +401,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Future<void> _exportZipForJob(int jobId) async {
     final zipBytes = LocalMediaService().exportZipForJob(jobId);
     final filename = 'job_${jobId}_media.zip';
-    if (kIsWeb) {
-      final blob = html.Blob([zipBytes], 'application/zip');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      html.AnchorElement(href: url)
-        ..setAttribute('download', filename)
-        ..click();
-      html.Url.revokeObjectUrl(url);
-    } else {
-      final dir = await getTemporaryDirectory();
-      final file = io.File('${dir.path}/$filename');
-      await file.writeAsBytes(zipBytes, flush: true);
-      await Share.shareXFiles([XFile(file.path, name: filename, mimeType: 'application/zip')]);
-    }
+    await _saveOrShareBytes(zipBytes, filename, mime: 'application/zip');
   }
 
   Future<void> _previewImage(Uint8List bytes, String name) async {
@@ -758,16 +762,35 @@ class _ReportScreenState extends State<ReportScreen> {
       );
 
       final bytes = await pdf.save();
-      final dir = await getTemporaryDirectory();
-      final file = io.File('${dir.path}/job_${jobIdStr}_warranty_qrs.pdf');
-      await file.writeAsBytes(bytes);
+      final filename = 'job_${jobIdStr}_warranty_qrs.pdf';
 
-      final String message = 'Warranty details for Job $jobIdStr (Vehicle: $vehicleNo)';
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: message,
-        subject: 'Warranty details for Job $jobIdStr',
-      );
+      if (FileDownloadHelper.isDesktop) {
+        final path = await FileDownloadHelper.saveFileToDownloads(fileName: filename, bytes: bytes);
+        FileDownloadHelper.openInFileManager(path);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Saved to Downloads: $filename'),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'Open',
+                onPressed: () => FileDownloadHelper.openInFileManager(path),
+              ),
+            ),
+          );
+        }
+      } else {
+        final dir = await getTemporaryDirectory();
+        final file = io.File('${dir.path}/$filename');
+        await file.writeAsBytes(bytes);
+
+        final String message = 'Warranty details for Job $jobIdStr (Vehicle: $vehicleNo)';
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: message,
+          subject: 'Warranty details for Job $jobIdStr',
+        );
+      }
     } catch (e) {
       _showErrorSnackBar('Error generating or sharing PDF: $e');
     }

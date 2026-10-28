@@ -202,7 +202,7 @@ STOCKISH_RE = re.compile(
     re.I,
 )
 SIZE_RE = re.compile(r"(\d{2,3})\s*/\s*(\d{2})\s*R\s*(\d{2})", re.I)
-TYRE_PREFIX_RE = re.compile(r"^(tyre|tire)\s*[-:]\s*", re.I)
+TYRE_PREFIX_RE = re.compile(r"^(tyre|tire|alloy|alloys|material|item)\s*[-:]\s*", re.I)
 BRANDS = (
     "bridgestone",
     "goodyear",
@@ -325,8 +325,10 @@ def tally_stock_name(app_name: str) -> str:
 
 
 def match_stock_item(app_name: str, catalog: list[dict[str, Any]]) -> dict[str, Any] | None:
+    cleaned = TYRE_PREFIX_RE.sub("", (app_name or "").strip())
     wanted = _norm(tally_stock_name(app_name))
     raw = _norm(app_name)
+    cleaned_norm = _norm(cleaned)
     size = size_label(app_name)
     brand = next(
         (item for item in BRANDS if _has_brand(app_name, item)),
@@ -337,15 +339,41 @@ def match_stock_item(app_name: str, catalog: list[dict[str, Any]]) -> dict[str, 
         for row in catalog
         if not str(row.get("guid") or "").startswith("TYREX-ITEM-")
     ]
+    # Pass 1: exact match or stock_group + name match
+    for row in real_rows:
+        name = row.get("name") or ""
+        group = row.get("stock_group") or ""
+        key = _norm(name)
+        if not key:
+            continue
+        if key in {wanted, raw, cleaned_norm}:
+            return row
+        group_key = _norm(f"{group} {name}")
+        if group_key in {wanted, raw, cleaned_norm}:
+            return row
+        if group and _norm(group) in cleaned_norm:
+            stripped = _norm(re.sub(re.escape(group), "", cleaned, flags=re.I))
+            if stripped and key == stripped:
+                return row
+
+    # Pass 2: substring match (when item name is fully contained in app_name)
     for row in real_rows:
         name = row.get("name") or ""
         key = _norm(name)
-        if key and key in {wanted, raw}:
-            return row
+        if key and len(key) >= 6:
+            if key in wanted or key in cleaned_norm:
+                return row
+
+    # Pass 3: fuzzy token scoring
+    tokens = [
+        t for t in re.findall(r"[a-z0-9]{3,}", (app_name or "").lower())
+        if t not in {"tyre", "tire", "nos", "alloy", "material"}
+    ]
     best: dict[str, Any] | None = None
     best_score = 0
     for row in real_rows:
         name = row.get("name") or ""
+        group = row.get("stock_group") or ""
         key = _norm(name)
         if not key:
             continue
@@ -354,15 +382,15 @@ def match_stock_item(app_name: str, catalog: list[dict[str, Any]]) -> dict[str, 
         if brand and not _has_brand(name, brand):
             continue
         score = 2 if size else 0
-        for token in re.findall(r"[a-z0-9]{3,}", (app_name or "").lower()):
-            if token in {"tyre", "tire", "nos"}:
-                continue
-            if token in name.lower():
+        search_blob = f"{name} {group}".lower()
+        for token in tokens:
+            if token in search_blob:
                 score += 1
         if score > best_score:
             best = row
             best_score = score
-    if best and best_score >= 4:
+    min_required = 3 if (size or brand) else max(2, len(tokens))
+    if best and best_score >= min_required:
         return best
     return None
 

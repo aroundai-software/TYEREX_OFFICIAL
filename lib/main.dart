@@ -52,8 +52,8 @@ void main() async {
   }
 
   await Supabase.initialize(
-    url: 'https://nodzljxarvnhwrzakwyz.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vZHpsanhhcnZuaHdyemFrd3l6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NDg4MjYsImV4cCI6MjEwNTAyNDgyNn0.ZlnBAoF3MTZUp0xUxArST0w_XgQgIWITfzaynHaGgcg',
+    url: 'https://xlgeqjpdsimkskssikhb.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsZ2VxanBkc2lta3Nrc3Npa2hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjM0MTIsImV4cCI6MjEwNDkzOTQxMn0.UcV7PUR87q4yg6uaW7Dz20Byy5VD7JvvnQyksuLd71U',
   );
 
   runApp(

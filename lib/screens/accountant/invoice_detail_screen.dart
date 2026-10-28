@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/date_utils.dart';
+import 'payment_screen.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -72,7 +73,14 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     if (isConv == true || isConv == 'true' || isConv == 1 || isConv == '1') return true;
     final bStatus = (widget.job['billing_status'] ?? '').toString().toLowerCase();
     if (bStatus == 'billed' || bStatus == 'paid' || bStatus == 'completed') return true;
+    if (widget.job['payment_method'] != null && widget.job['payment_method'].toString().trim().isNotEmpty) return true;
+    if (widget.job['paid_at'] != null && widget.job['paid_at'].toString().isNotEmpty) return true;
     return widget.job['billed_at'] != null && widget.job['billed_at'].toString().isNotEmpty;
+  }
+
+  bool get _isConvertedInTally {
+    final isConv = widget.job['is_converted'];
+    return isConv == true || isConv == 'true' || isConv == 1 || isConv == '1';
   }
 
   @override
@@ -191,15 +199,29 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   String _getCustomerName() {
-    return widget.job['bookings']?['customer_name'] ?? 
-           widget.job['Owner name'] ?? 
-           'Walk-in Customer';
+    final bookingName = widget.job['bookings']?['customer_name']?.toString().trim();
+    if (bookingName != null && bookingName.isNotEmpty) return bookingName;
+
+    final reportOwner = widget.job['Owner name']?.toString().trim();
+    if (reportOwner != null && reportOwner.isNotEmpty) return reportOwner;
+
+    final vehicleOwner = widget.job['vehicles']?['Owner name']?.toString().trim();
+    if (vehicleOwner != null && vehicleOwner.isNotEmpty) return vehicleOwner;
+
+    return 'Walk-in Customer';
   }
 
   String _getCustomerPhone() {
-    return widget.job['bookings']?['customer_phone'] ?? 
-           widget.job['client_phone'] ?? 
-           '-';
+    final bookingPhone = widget.job['bookings']?['customer_phone']?.toString().trim();
+    if (bookingPhone != null && bookingPhone.isNotEmpty) return bookingPhone;
+
+    final reportPhone = widget.job['client_phone']?.toString().trim();
+    if (reportPhone != null && reportPhone.isNotEmpty) return reportPhone;
+
+    final vehiclePhone = widget.job['vehicles']?['MobileNumber']?.toString().trim();
+    if (vehiclePhone != null && vehiclePhone.isNotEmpty) return vehiclePhone;
+
+    return '-';
   }
   String _getVehicleNo() => widget.job['vehicles']?['Vehicle Number'] ?? '-';
   String _getBrandModel() {
@@ -393,6 +415,188 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     await Printing.sharePdf(bytes: bytes, filename: filename);
   }
 
+  Future<void> _showRequestEditDialog() async {
+    if (_isJobBilled || _isConvertedInTally) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot request edit for job cards that are already billed or converted.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final reasonController = TextEditingController();
+    bool isSubmitting = false;
+    final jobCardId = widget.job['job_card_id'] ?? '#${widget.job['id']}';
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: const Icon(Icons.edit_note, color: Color(0xFFD97706), size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Request Edit',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Send job card $jobCardId to executive so they can edit services, tyres, labour, or complaints.',
+                      style: const TextStyle(fontSize: 13.5, color: AppTheme.textSecondary, height: 1.4),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Reason for Edit Request (Optional):',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: reasonController,
+                      maxLines: 3,
+                      enabled: !isSubmitting,
+                      decoration: InputDecoration(
+                        hintText: 'e.g., Wrong tyre added, update labour cost...',
+                        hintStyle: const TextStyle(fontSize: 12.5, color: Colors.grey),
+                        contentPadding: const EdgeInsets.all(12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFD97706), width: 1.5),
+                        ),
+                      ),
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx, false),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          setDialogState(() => isSubmitting = true);
+                          try {
+                            final reportId = widget.job['id'];
+
+                            // Prepare marks payload with reason
+                            Map<String, dynamic> marksMap = {};
+                            final rawMarks = widget.job['marks'];
+                            if (rawMarks is Map) {
+                              marksMap = Map<String, dynamic>.from(rawMarks);
+                            } else if (rawMarks is String && rawMarks.isNotEmpty) {
+                              try {
+                                final decoded = jsonDecode(rawMarks);
+                                if (decoded is Map<String, dynamic>) marksMap = decoded;
+                              } catch (_) {}
+                            }
+
+                            final reason = reasonController.text.trim();
+                            if (reason.isNotEmpty) {
+                              marksMap['edit_request_reason'] = reason;
+                              marksMap['edit_requested_at'] = DateTime.now().toUtc().toIso8601String();
+                            }
+
+                            final updateData = <String, dynamic>{
+                              'status': AppConstants.statusEditRequested,
+                              if (marksMap.isNotEmpty) 'marks': marksMap,
+                            };
+
+                            await supabase.from('reports').update(updateData).eq('id', reportId);
+
+                            // Update local state
+                            setState(() {
+                              widget.job['status'] = AppConstants.statusEditRequested;
+                              if (marksMap.isNotEmpty) widget.job['marks'] = marksMap;
+                            });
+
+                            if (dialogCtx.mounted) {
+                              Navigator.pop(dialogCtx, true);
+                            }
+                          } catch (e) {
+                            setDialogState(() => isSubmitting = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to request edit: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    elevation: 0,
+                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Submit Request', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Expanded(child: Text('Edit request sent to executive successfully.')),
+            ],
+          ),
+          backgroundColor: Color(0xFF059669),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
@@ -442,6 +646,46 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             tooltip: 'Print / Download',
             onPressed: _printInvoice,
           ),
+          if (!isBilled && !_isConvertedInTally)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              tooltip: 'More options',
+              onSelected: (val) {
+                if (val == 'request_edit') {
+                  _showRequestEditDialog();
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'request_edit',
+                  enabled: widget.job['status'] != AppConstants.statusEditRequested,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.edit_note_rounded,
+                        color: widget.job['status'] == AppConstants.statusEditRequested
+                            ? Colors.grey
+                            : const Color(0xFFD97706),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.job['status'] == AppConstants.statusEditRequested
+                            ? 'Edit Already Requested'
+                            : 'Request Edit from Executive',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: widget.job['status'] == AppConstants.statusEditRequested
+                              ? Colors.grey
+                              : AppTheme.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -450,55 +694,103 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Status Header Banner
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isBilled ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isBilled ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isBilled ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
-                    color: isBilled ? const Color(0xFF059669) : const Color(0xFFD97706),
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            Builder(
+              builder: (context) {
+                final bool isEditRequested = widget.job['status'] == AppConstants.statusEditRequested;
+                if (isEditRequested) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFB923C), width: 1.2),
+                    ),
+                    child: Row(
                       children: [
-                        Text(
-                          isBilled ? 'BILLED IN TALLY' : 'PENDING BILLING',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                            color: isBilled ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isBilled
-                              ? (widget.job['billed_at'] != null 
-                                  ? 'Converted to Sales Invoice on ${_formatDate(widget.job['billed_at'])}' 
-                                  : 'Converted to Sales Invoice in Tally')
-                              : 'Order created in Tally. Ready to be converted to Sales Invoice.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isBilled ? const Color(0xFF047857) : const Color(0xFFB45309),
+                        const Icon(Icons.edit_note_rounded, color: Color(0xFFEA580C), size: 24),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'EDIT REQUESTED TO EXECUTIVE',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF9A3412),
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Job card is currently with executive for editing services, tyres, or labour.',
+                                style: TextStyle(fontSize: 12, color: Color(0xFFC2410C)),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                  );
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isBilled ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isBilled ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                      width: 1.2,
+                    ),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isBilled ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+                        color: isBilled ? const Color(0xFF059669) : const Color(0xFFD97706),
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isConvertedInTally
+                                  ? 'CONVERTED IN TALLY'
+                                  : (isBilled ? 'MARKED AS BILLED FROM APP' : 'PENDING BILLING'),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: isBilled ? const Color(0xFF065F46) : const Color(0xFF92400E),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _isConvertedInTally
+                                  ? (widget.job['billed_at'] != null 
+                                      ? 'Converted to Sales Invoice on ${_formatDate(widget.job['billed_at'])}' 
+                                      : 'Converted to Sales Invoice in Tally')
+                                  : (isBilled
+                                      ? 'Payment reference recorded in App (for reference)'
+                                      : 'Order created in Tally. Ready to be converted to Sales Invoice.'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isBilled ? const Color(0xFF047857) : const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
 
             // Customer & Vehicle
@@ -566,7 +858,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               color: isBilled ? const Color(0xFF059669) : Colors.orange,
               child: Column(
                 children: [
-                  _infoRow('Billing Status', isBilled ? 'Billed' : 'Pending'),
+                  _infoRow(
+                    'Billing Status',
+                    _isConvertedInTally
+                        ? 'Converted in Tally'
+                        : (isBilled ? 'Marked as Billed from App' : 'Pending'),
+                  ),
                   if (widget.job['job_card_id'] != null)
                     _infoRow('Order / JC No.', widget.job['job_card_id']),
                   if (widget.job['billed_at'] != null)
@@ -581,11 +878,209 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            // ── Payment & Day-Book Reference Section ──
+            const SizedBox(height: 16),
+            _buildSection(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Payment & Day-Book Reference',
+              color: isBilled ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isBilled) ...[
+                    _infoRow('Payment Status', 'Paid & Recorded'),
+                    if (widget.job['payment_method'] != null)
+                      _infoRow('Payment Mode', widget.job['payment_method'].toString()),
+                    if (widget.job['paid_at'] != null)
+                      _infoRow('Payment Date', _formatDate(widget.job['paid_at'])),
+                    if (widget.job['payment_notes'] != null && widget.job['payment_notes'].toString().trim().isNotEmpty)
+                      _infoRow('Day-Book Notes', widget.job['payment_notes'].toString().trim()),
+                    // If split payments available
+                    if (widget.job['payments'] is List && (widget.job['payments'] as List).isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Split Breakdown:',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      ...(widget.job['payments'] as List).map((p) {
+                        if (p is! Map) return const SizedBox();
+                        final m = p['method'] ?? 'Payment';
+                        final amt = NumberFormat.currency(symbol: '₹', decimalDigits: 0).format(p['amount'] ?? 0);
+                        final tid = p['transaction_id']?.toString() ?? '';
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(_getPaymentIcon(m.toString()), size: 16, color: _getPaymentColor(m.toString())),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    m.toString(),
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  ),
+                                  if (tid.isNotEmpty) ...[
+                                    const SizedBox(width: 6),
+                                    Text('($tid)', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                  ],
+                                ],
+                              ),
+                              Text(amt, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ] else ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.amber.shade900, size: 20),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Not marked as billed yet. Tap "Mark Billed & Record Payment" below to save payment mode (GPay, PhonePe, Cash, Split) and day-book reference notes.',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 80), // Padding for sticky bottom bar
           ],
         ),
       ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: (widget.job['status'] == AppConstants.statusEditRequested)
+              ? SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.hourglass_top_rounded, size: 20, color: Color(0xFFEA580C)),
+                    label: const Text(
+                      'Edit Requested (With Executive)',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFEA580C)),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFB923C)),
+                      backgroundColor: const Color(0xFFFFF7ED),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                )
+              : (isBilled
+                  ? SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openPaymentScreen,
+                        icon: const Icon(Icons.edit_note, size: 20),
+                        label: const Text(
+                          'Edit Payment Details',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF059669),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                      ),
+                    )
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openPaymentScreen,
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
+                        label: const Text(
+                          'Mark as Billed',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF059669),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                      ),
+                    )),
+        ),
+      ),
     );
+  }
+
+  Future<void> _openPaymentScreen() async {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(job: widget.job, grandTotal: _grandTotal),
+      ),
+    );
+    if (updated == true && mounted) {
+      setState(() {});
+    }
+  }
+
+  IconData _getPaymentIcon(String method) {
+    final m = method.toLowerCase();
+    if (m.contains('gpay') || m.contains('google')) return Icons.account_balance_wallet_rounded;
+    if (m.contains('phonepe') || m.contains('phone pe')) return Icons.phone_android_rounded;
+    if (m.contains('paytm')) return Icons.account_balance_wallet_outlined;
+    if (m.contains('cash')) return Icons.payments_rounded;
+    if (m.contains('card')) return Icons.credit_card_rounded;
+    if (m.contains('split')) return Icons.call_split_rounded;
+    if (m.contains('upi')) return Icons.qr_code_2_rounded;
+    if (m.contains('bank') || m.contains('net')) return Icons.account_balance_rounded;
+    if (m.contains('cheque')) return Icons.description_outlined;
+    return Icons.payment_rounded;
+  }
+
+  Color _getPaymentColor(String method) {
+    final m = method.toLowerCase();
+    if (m.contains('gpay') || m.contains('google')) return const Color(0xFF1A73E8);
+    if (m.contains('phonepe') || m.contains('phone pe')) return const Color(0xFF5F259F);
+    if (m.contains('paytm')) return const Color(0xFF0284C7);
+    if (m.contains('cash')) return const Color(0xFF059669);
+    if (m.contains('card')) return const Color(0xFF2563EB);
+    if (m.contains('split')) return const Color(0xFF7C3AED);
+    if (m.contains('upi')) return const Color(0xFFEA580C);
+    if (m.contains('bank') || m.contains('net')) return const Color(0xFF475569);
+    if (m.contains('cheque')) return const Color(0xFF7C3AED);
+    return const Color(0xFF059669);
   }
 
   Widget _buildSection({

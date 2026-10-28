@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/uuid_helper.dart';
-import '../../services/company_service.dart';
 
 class SplitPayment {
   String method;
@@ -43,7 +42,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final supabase = Supabase.instance.client;
   final _notesController = TextEditingController();
 
-  final List<String> _paymentMethods = ['UPI', 'Card', 'Cash', 'Credit', 'Bajaj Finance', 'Buyback', 'Others'];
+  final List<String> _paymentMethods = [
+    'GPay',
+    'PhonePe',
+    'Cash',
+    'Card',
+    'Paytm',
+    'UPI',
+    'Net Banking',
+    'Bajaj Finance',
+    'Cheque',
+    'Credit',
+    'Buyback',
+    'Others',
+  ];
   final List<SplitPayment> _splits = [];
   bool _isSubmitting = false;
   DateTime _paymentDate = DateTime.now();
@@ -52,15 +64,62 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _splits.add(SplitPayment(method: 'UPI', initialAmount: widget.grandTotal));
 
-    // Determine initial voucher type
-    final gst = widget.job['gst_percent'];
-    final hasGst = gst != null && (gst is num ? gst > 0 : (double.tryParse(gst.toString()) ?? 0) > 0);
-    if (hasGst) {
-      _selectedVoucherType = 'GST SALES B2C';
+    // 1. Pre-fill existing payments if available
+    final rawPayments = widget.job['payments'];
+    if (rawPayments is List && rawPayments.isNotEmpty) {
+      for (final p in rawPayments) {
+        if (p is Map) {
+          final m = p['method']?.toString() ?? 'GPay';
+          final amt = ((p['amount'] ?? 0) as num).toDouble();
+          final tid = p['transaction_id']?.toString() ?? '';
+          final split = SplitPayment(
+            method: _paymentMethods.contains(m) ? m : 'GPay',
+            initialAmount: amt > 0 ? amt : widget.grandTotal,
+          );
+          if (tid.isNotEmpty) {
+            split.transactionIdController.text = tid;
+          }
+          _splits.add(split);
+        }
+      }
+    }
+
+    // 2. If no payment rows, check payment_method on report
+    if (_splits.isEmpty) {
+      final existingMethod = widget.job['payment_method']?.toString();
+      final defaultMethod = (existingMethod != null && _paymentMethods.contains(existingMethod))
+          ? existingMethod
+          : 'GPay';
+      _splits.add(SplitPayment(method: defaultMethod, initialAmount: widget.grandTotal));
+    }
+
+    // 3. Pre-fill notes
+    final existingNotes = widget.job['payment_notes']?.toString();
+    if (existingNotes != null && existingNotes.isNotEmpty) {
+      _notesController.text = existingNotes;
+    }
+
+    // 4. Pre-fill payment date
+    final existingDateStr = widget.job['paid_at'] ?? widget.job['billed_at'];
+    if (existingDateStr != null && existingDateStr.toString().isNotEmpty) {
+      try {
+        _paymentDate = DateTime.parse(existingDateStr.toString()).toLocal();
+      } catch (_) {}
+    }
+
+    // 5. Determine voucher type
+    final existingVoucher = widget.job['voucher_type']?.toString();
+    if (existingVoucher != null && existingVoucher.isNotEmpty) {
+      _selectedVoucherType = existingVoucher;
     } else {
-      _selectedVoucherType = 'SALES B2C';
+      final gst = widget.job['gst_percent'];
+      final hasGst = gst != null && (gst is num ? gst > 0 : (double.tryParse(gst.toString()) ?? 0) > 0);
+      if (hasGst) {
+        _selectedVoucherType = 'GST SALES B2C';
+      } else {
+        _selectedVoucherType = 'SALES B2C';
+      }
     }
   }
 
@@ -180,84 +239,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final nowUtcIso = _paymentDate.toUtc().toIso8601String();
       final reportId = int.tryParse(widget.job['id'].toString()) ?? widget.job['id'];
       final notes = _notesController.text.trim().isEmpty ? null : _notesController.text.trim();
-      final invType = _selectedVoucherType.contains('B2B') ? 'B2B' : 'B2C';
+      final paymentMethod = _splits.length > 1 ? 'Split' : _splits.first.method;
 
-      // 1. Update reports table to Paid FIRST
+      // 1. Update reports table (App reference only - DO NOT touch is_converted)
       try {
         await supabase.from('reports').update({
           'billing_status': AppConstants.statusPaid,
           'paid_at': nowUtcIso,
-          'payment_method': 'Split',
+          'payment_method': paymentMethod,
           'payment_notes': notes,
-          'invoice_type': invType,
-          'voucher_type': _selectedVoucherType,
         }).eq('id', reportId);
       } catch (e1) {
-        debugPrint('⚠️ update report full payload failed: $e1, trying without voucher_type');
+        debugPrint('⚠️ update report core payload failed: $e1, trying minimum fallback');
         try {
           await supabase.from('reports').update({
             'billing_status': AppConstants.statusPaid,
             'paid_at': nowUtcIso,
-            'payment_method': 'Split',
-            'payment_notes': notes,
-            'invoice_type': invType,
           }).eq('id', reportId);
         } catch (e2) {
-          debugPrint('⚠️ update report without voucher_type failed: $e2, trying core billing_status');
-          try {
-            await supabase.from('reports').update({
-              'billing_status': AppConstants.statusPaid,
-              'paid_at': nowUtcIso,
-              'payment_method': 'Split',
-              'payment_notes': notes,
-            }).eq('id', reportId);
-          } catch (e3) {
-            debugPrint('⚠️ update report minimum fallback: $e3');
-            await supabase.from('reports').update({
-              'billing_status': AppConstants.statusPaid,
-              'paid_at': nowUtcIso,
-            }).eq('id', reportId);
-          }
+          debugPrint('⚠️ minimum fallback failed: $e2');
         }
-      }
-
-      // Retrieve branch/company fields from report or CompanyService
-      String? guidVal = widget.job['Guid'] as String? ?? CompanyService().guid;
-      String? branchIdVal = widget.job['branch_id']?.toString() ?? CompanyService().branchId;
-      String? branchNameVal = widget.job['branch_name'] as String? ?? widget.job['company_name'] as String? ?? CompanyService().branchName;
-      String? companyNameVal = widget.job['company_name'] as String? ?? widget.job['branch_name'] as String? ?? CompanyService().companyName;
-
-      // If any is missing, fetch fresh from reports table
-      if (guidVal == null || branchIdVal == null || companyNameVal == null) {
-        try {
-          final repRow = await supabase
-              .from('reports')
-              .select('id, branch_id, branch_name, company_name, "Guid"')
-              .eq('id', reportId)
-              .maybeSingle();
-          if (repRow != null) {
-            guidVal ??= repRow['Guid'] as String?;
-            branchIdVal ??= repRow['branch_id']?.toString();
-            branchNameVal ??= repRow['branch_name'] as String?;
-            companyNameVal ??= repRow['company_name'] as String? ?? repRow['branch_name'] as String?;
-          }
-        } catch (_) {}
-      }
-
-      // If Guid is still null and we have branchIdVal, fetch from branches table
-      if (guidVal == null && branchIdVal != null) {
-        try {
-          final branchRow = await supabase
-              .from('branches')
-              .select('id, "Guid", branch_name')
-              .eq('id', branchIdVal)
-              .maybeSingle();
-          if (branchRow != null) {
-            guidVal = branchRow['Guid'] as String?;
-            branchNameVal ??= branchRow['branch_name'] as String?;
-            companyNameVal ??= branchRow['branch_name'] as String?;
-          }
-        } catch (_) {}
       }
 
       // 2. Clean up any existing payments for this report_id first so we update/replace rather than create duplicate rows
@@ -275,6 +276,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final tid = split.transactionIdController.text.trim();
         final alterId = generateUuidV4();
         
+        // Base payments schema columns
         final Map<String, dynamic> paymentData = {
           'report_id': reportId,
           'method': split.method,
@@ -286,11 +288,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           'alter_id': alterId,
           'notes': notes,
         };
-
-        if (guidVal != null && guidVal.isNotEmpty) paymentData['Guid'] = guidVal;
-        if (companyNameVal != null && companyNameVal.isNotEmpty) paymentData['company_name'] = companyNameVal;
-        if (branchNameVal != null && branchNameVal.isNotEmpty) paymentData['branch_name'] = branchNameVal;
-        if (branchIdVal != null && branchIdVal.isNotEmpty) paymentData['branch_id'] = branchIdVal;
 
         // Try insert with progressive column exclusion only for offending column
         bool inserted = false;
@@ -349,15 +346,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
 
-      // Update local object
+      // Update local object (without touching is_converted)
       widget.job['billing_status'] = AppConstants.statusPaid;
       widget.job['paid_at'] = nowUtcIso;
-      widget.job['payment_method'] = 'Split';
+      widget.job['payment_method'] = paymentMethod;
+      widget.job['payment_notes'] = notes;
       widget.job['voucher_type'] = _selectedVoucherType;
+      widget.job['payments'] = _splits.map((s) => {
+        'method': s.method,
+        'amount': double.tryParse(s.amountController.text) ?? 0.0,
+        'transaction_id': s.transactionIdController.text.trim(),
+        'paid_at': nowUtcIso,
+        'notes': notes,
+      }).toList();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('✅ Payment recorded successfully as $_selectedVoucherType!'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(_splits.length > 1 
+              ? '✅ Split payment saved & Marked as Billed from App!'
+              : '✅ Paid via $paymentMethod & Marked as Billed from App!'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -378,7 +388,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Record Payment'),
+        title: const Text('Payment Methods'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: AppTheme.textPrimary,
@@ -466,7 +476,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               itemCount: _splits.length,
               itemBuilder: (context, index) {
                 final split = _splits[index];
-                final requiresTransactionId = ['Card', 'UPI', 'Bajaj Finance', 'Others'].contains(split.method);
+                final showTransactionId = split.method != 'Cash';
                 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -483,7 +493,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            _splits.length > 1 ? 'Payment ${index + 1}' : 'Payment Method & Amount',
+                            _splits.length > 1 ? 'Payment Mode #${index + 1}' : 'Payment Mode & Amount',
                             style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                           ),
                           if (_splits.length > 1)
@@ -503,23 +513,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         runSpacing: 8,
                         children: _paymentMethods.map((method) {
                           final isSelected = split.method == method;
+                          final methodColor = _colorForMethod(method);
                           return GestureDetector(
                             onTap: () => setState(() => split.method = method),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primaryColor : Colors.white,
+                                color: isSelected ? methodColor : Colors.white,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isSelected ? AppTheme.primaryColor : const Color(0xFFE5E7EB),
+                                  color: isSelected ? methodColor : const Color(0xFFE5E7EB),
+                                  width: isSelected ? 1.5 : 1,
                                 ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(_iconForMethod(method), size: 14, color: isSelected ? Colors.white : AppTheme.textSecondary),
-                                  const SizedBox(width: 4),
+                                  Icon(_iconForMethod(method), size: 15, color: isSelected ? Colors.white : methodColor),
+                                  const SizedBox(width: 5),
                                   Text(
                                     method,
                                     style: TextStyle(
@@ -569,13 +581,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         onChanged: (val) => _onAmountChanged(index, val),
                       ),
                       
-                      if (requiresTransactionId) ...[
+                      if (showTransactionId) ...[
                         const SizedBox(height: 12),
                         TextField(
                           controller: split.transactionIdController,
                           decoration: InputDecoration(
-                            labelText: 'Transaction ID / Ref No.',
-                            hintText: 'e.g., 1234567890',
+                            labelText: 'Ref / Txn ID / UTR (optional)',
+                            hintText: 'e.g., GPay UTR, UPI Ref, Cheque No.',
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -585,7 +597,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                           ),
@@ -600,22 +612,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Center(
               child: TextButton.icon(
                 onPressed: _addSplit,
-                icon: const Icon(Icons.add, color: AppTheme.primaryColor),
-                label: const Text('Add Split Payment', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                label: const Text('+ Add Split Payment Mode', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ),
 
             const SizedBox(height: 24),
 
-            const Text('Notes (optional)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-            const SizedBox(height: 12),
+            const Text('Day-Book Notes / Payment Reference', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+            const SizedBox(height: 6),
+            const Text('Enter reference notes for book keeping (e.g. Daybook page no., cash notes, customer split remark)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+            const SizedBox(height: 8),
 
             TextField(
               controller: _notesController,
-              maxLines: 3,
+              maxLines: 2,
               decoration: InputDecoration(
-                hintText: '',
-                hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                hintText: 'e.g. Register page 42, GPay #987654, Cash collected at reception',
+                hintStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -626,8 +640,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                focusedBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                   borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
                 ),
               ),
@@ -643,11 +657,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.check_circle, size: 20),
                 label: Text(
-                  _isSubmitting ? 'Recording...' : 'Confirm Payment',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  _isSubmitting ? 'Saving...' : 'Save',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: const Color(0xFF059669),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -807,22 +821,61 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   IconData _iconForMethod(String method) {
     switch (method) {
-      case 'Card':
-        return Icons.credit_card;
-      case 'UPI':
-        return Icons.phone_android;
+      case 'GPay':
+        return Icons.account_balance_wallet_rounded;
+      case 'PhonePe':
+        return Icons.phone_android_rounded;
+      case 'Paytm':
+        return Icons.account_balance_wallet_outlined;
       case 'Cash':
-        return Icons.money;
-      case 'Credit':
-        return Icons.pending_actions;
+        return Icons.payments_rounded;
+      case 'Card':
+        return Icons.credit_card_rounded;
+      case 'UPI':
+        return Icons.qr_code_2_rounded;
+      case 'Net Banking':
+        return Icons.account_balance_rounded;
       case 'Bajaj Finance':
-        return Icons.account_balance;
+        return Icons.storefront_rounded;
+      case 'Cheque':
+        return Icons.description_outlined;
+      case 'Credit':
+        return Icons.history_rounded;
       case 'Buyback':
-        return Icons.swap_horiz;
+        return Icons.swap_horiz_rounded;
       case 'Others':
-        return Icons.more_horiz;
       default:
-        return Icons.payment;
+        return Icons.more_horiz_rounded;
+    }
+  }
+
+  Color _colorForMethod(String method) {
+    switch (method) {
+      case 'GPay':
+        return const Color(0xFF1A73E8);
+      case 'PhonePe':
+        return const Color(0xFF5F259F);
+      case 'Cash':
+        return const Color(0xFF059669);
+      case 'Card':
+        return const Color(0xFF2563EB);
+      case 'Paytm':
+        return const Color(0xFF0284C7);
+      case 'UPI':
+        return const Color(0xFFEA580C);
+      case 'Net Banking':
+        return const Color(0xFF475569);
+      case 'Bajaj Finance':
+        return const Color(0xFF0284C7);
+      case 'Cheque':
+        return const Color(0xFF7C3AED);
+      case 'Credit':
+        return const Color(0xFFD97706);
+      case 'Buyback':
+        return const Color(0xFF0D9488);
+      case 'Others':
+      default:
+        return const Color(0xFF64748B);
     }
   }
 }

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
+
+# Allow running directly as python sync/fetch_sales.py
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import requests
 

@@ -87,6 +87,12 @@ class TyreCatalogHelper {
       return 'Neo Wheels';
     }
 
+    // If material item, extract group or category as brand
+    if ((raw['item_type'] ?? '') == 'material') {
+      final grp = (raw['brand'] ?? raw['stock_group'] ?? raw['category'] ?? 'Material').toString().trim();
+      return grp.isNotEmpty ? _capitalize(grp) : 'Material';
+    }
+
     // If raw brand is NOT a size or category, return rawBrand with clean casing
     if (rawBrand.isNotEmpty &&
         !RegExp(r'^\d').hasMatch(rawBrand) &&
@@ -103,6 +109,11 @@ class TyreCatalogHelper {
 
   /// Extract standard Tyre Size from size, model, brand, or tally_name
   static String extractSize(Map<String, dynamic> raw) {
+    if ((raw['item_type'] ?? '') == 'material') {
+      final rawSize = (raw['size'] ?? '').toString().trim();
+      return (rawSize.isNotEmpty && rawSize != '-') ? _formatSize(rawSize) : '';
+    }
+
     final rawSize = (raw['size'] ?? '').toString().trim();
     if (rawSize.isNotEmpty && rawSize != '-' && !rawSize.startsWith('?')) {
       return _formatSize(rawSize);
@@ -129,6 +140,10 @@ class TyreCatalogHelper {
 
   /// Extract clean Model/Pattern name
   static String extractModel(Map<String, dynamic> raw) {
+    if ((raw['item_type'] ?? '') == 'material') {
+      return (raw['model'] ?? raw['name'] ?? raw['tally_name'] ?? '').toString().trim();
+    }
+
     final rawModel = (raw['model'] ?? '').toString().trim();
     final tallyName = (raw['tally_name'] ?? '').toString().trim();
     String model = rawModel.isNotEmpty ? rawModel : tallyName;
@@ -184,7 +199,6 @@ class TyreCatalogHelper {
 class TyreCatalogPicker extends StatefulWidget {
   final List<Map<String, dynamic>> tyreCatalog;
   final Function(Map<String, dynamic> tyre) onTyreSelected;
-  final Function(String brand, String model, String size, double? price)? onCustomTyre;
   final String? initialBrand;
   final String? initialSize;
 
@@ -192,7 +206,6 @@ class TyreCatalogPicker extends StatefulWidget {
     super.key,
     required this.tyreCatalog,
     required this.onTyreSelected,
-    this.onCustomTyre,
     this.initialBrand,
     this.initialSize,
   });
@@ -202,7 +215,6 @@ class TyreCatalogPicker extends StatefulWidget {
     BuildContext context, {
     required List<Map<String, dynamic>> tyreCatalog,
     Function(Map<String, dynamic> tyre)? onTyreSelected,
-    Function(String brand, String model, String size, double? price)? onCustomTyre,
     String? initialBrand,
     String? initialSize,
   }) {
@@ -217,18 +229,6 @@ class TyreCatalogPicker extends StatefulWidget {
             onTyreSelected(selected);
           }
           Navigator.of(ctx).pop(selected);
-        },
-        onCustomTyre: (brand, model, size, price) {
-          if (onCustomTyre != null) {
-            onCustomTyre(brand, model, size, price);
-          }
-          Navigator.of(ctx).pop({
-            'brand': brand,
-            'model': model,
-            'size': size,
-            'billing_price': price,
-            'basic_price': price,
-          });
         },
         initialBrand: initialBrand,
         initialSize: initialSize,
@@ -245,6 +245,9 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
   String _searchQuery = '';
   String? _selectedBrand;
   String? _selectedRimSize;
+  String _selectedCategory = 'all'; // 'all', 'tyre', 'material'
+  int _tyreCount = 0;
+  int _materialCount = 0;
 
   List<String> _availableBrands = [];
   List<String> _availableRimSizes = [];
@@ -269,6 +272,10 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.trim().toLowerCase();
+      // If user starts searching, clear the strict initial brand filter so all products can be found
+      if (_searchQuery.isNotEmpty && _selectedBrand != null) {
+        _selectedBrand = null;
+      }
       _filterCatalog();
     });
   }
@@ -281,8 +288,17 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
     final brandsSet = <String>{};
     final rimSet = <String>{};
     final List<Map<String, dynamic>> normalized = [];
+    int tyreCount = 0;
+    int materialCount = 0;
 
     for (final item in widget.tyreCatalog) {
+      final itemType = (item['item_type'] ?? 'tyre').toString().toLowerCase();
+      if (itemType == 'material') {
+        materialCount++;
+      } else {
+        tyreCount++;
+      }
+
       final cleanBrand = TyreCatalogHelper.extractBrand(item);
       final cleanSize = TyreCatalogHelper.extractSize(item);
       final cleanModel = TyreCatalogHelper.extractModel(item);
@@ -314,9 +330,17 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
         'billing_price': billingPrice ?? basicPrice,
         'basic_price': basicPrice ?? billingPrice,
         'tally_name': item['tally_name'],
+        'item_type': itemType,
+        'stock_group': item['stock_group'],
+        'category': item['category'],
+        'closing_qty': item['closing_qty'],
+        'closing_qty_text': item['closing_qty_text'],
         'raw': item,
       });
     }
+
+    _tyreCount = tyreCount;
+    _materialCount = materialCount;
 
     // Sort brands with primary brands first
     final sortedBrands = brandsSet.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
@@ -337,11 +361,22 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
     final normalizedQuery = _normalizeString(_searchQuery);
 
     _filteredTyres = _normalizedCatalog.where((item) {
+      final itemType = (item['item_type'] ?? 'tyre').toString().toLowerCase();
       final brand = (item['brand'] ?? '').toString().trim();
       final model = (item['model'] ?? '').toString().trim();
       final size = (item['size'] ?? '').toString().trim();
       final tallyName = (item['tally_name'] ?? '').toString().trim();
       final liSi = (item['li_si'] ?? '').toString().trim();
+      final stockGroup = (item['stock_group'] ?? '').toString().trim();
+      final category = (item['category'] ?? '').toString().trim();
+
+      // Category filter (All, Tyre, Material)
+      if (_selectedCategory == 'tyre' && itemType != 'tyre') {
+        return false;
+      }
+      if (_selectedCategory == 'material' && itemType != 'material') {
+        return false;
+      }
 
       // Brand filter
       if (_selectedBrand != null && _selectedBrand!.isNotEmpty) {
@@ -350,7 +385,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
         }
       }
 
-      // Rim size filter
+      // Rim size filter (only apply if item has size or user selected rim)
       if (_selectedRimSize != null && _selectedRimSize!.isNotEmpty) {
         final itemRim = TyreCatalogHelper.extractRimSize(size);
         if (itemRim != _selectedRimSize) {
@@ -365,8 +400,10 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
         final normSize = _normalizeString(size);
         final normTally = _normalizeString(tallyName);
         final normLiSi = _normalizeString(liSi);
+        final normGroup = _normalizeString(stockGroup);
+        final normCat = _normalizeString(category);
 
-        final combined = '$normBrand $normSize $normModel $normTally $normLiSi';
+        final combined = '$normBrand $normSize $normModel $normTally $normLiSi $normGroup $normCat';
 
         final words = _searchQuery.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).map(_normalizeString);
         for (final word in words) {
@@ -378,122 +415,6 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
 
       return true;
     }).toList();
-  }
-
-  void _showAddCustomDialog() {
-    final brandCtrl = TextEditingController(text: _selectedBrand ?? '');
-    final modelCtrl = TextEditingController();
-    final sizeCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-
-    if (_searchQuery.isNotEmpty) {
-      final parts = _searchQuery.split(' ');
-      if (parts.length >= 2) {
-        sizeCtrl.text = parts.last.toUpperCase();
-      }
-    }
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
-            SizedBox(width: 8),
-            Text('Add Custom Tyre', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: brandCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Brand *',
-                  hintText: 'e.g. Ceat, Continental',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: modelCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Model / Pattern *',
-                  hintText: 'e.g. Zoom Rad X3, CC6',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: sizeCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Size *',
-                  hintText: 'e.g. 140/60R17, 195/65R15',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                textCapitalization: TextCapitalization.characters,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priceCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Billing Price (₹)',
-                  hintText: 'e.g. 2159.68',
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final b = brandCtrl.text.trim();
-              final m = modelCtrl.text.trim();
-              final s = sizeCtrl.text.trim();
-              final p = double.tryParse(priceCtrl.text.trim());
-
-              if (b.isEmpty || m.isEmpty || s.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please fill Brand, Model, and Size')),
-                );
-                return;
-              }
-
-              Navigator.of(ctx).pop();
-              if (widget.onCustomTyre != null) {
-                widget.onCustomTyre!(b, m, s, p);
-              } else {
-                widget.onTyreSelected({
-                  'brand': b,
-                  'model': m,
-                  'size': s,
-                  'billing_price': p,
-                  'basic_price': p,
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Select & Use'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -533,7 +454,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                     color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.tire_repair, color: AppTheme.primaryColor, size: 22),
+                  child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryColor, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -541,7 +462,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Select Tyre from Catalog',
+                        'Select Tyre / Material',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -549,7 +470,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                         ),
                       ),
                       Text(
-                        '${widget.tyreCatalog.length} tyres available in database',
+                        '${widget.tyreCatalog.length} items ($_tyreCount tyres, $_materialCount materials)',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -604,6 +525,52 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
             ),
           ),
 
+          // Category Selector Tabs (All, Tyres, Materials)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                _buildCategoryTab(
+                  label: 'All (${_normalizedCatalog.length})',
+                  icon: Icons.inventory_2_outlined,
+                  isSelected: _selectedCategory == 'all',
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = 'all';
+                      _filterCatalog();
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildCategoryTab(
+                  label: 'Tyres ($_tyreCount)',
+                  icon: Icons.tire_repair,
+                  isSelected: _selectedCategory == 'tyre',
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = 'tyre';
+                      _filterCatalog();
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildCategoryTab(
+                  label: 'Materials ($_materialCount)',
+                  icon: Icons.build_circle_outlined,
+                  isSelected: _selectedCategory == 'material',
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = 'material';
+                      _filterCatalog();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
           // Brand Filter Chips
           if (_availableBrands.isNotEmpty)
             Container(
@@ -640,8 +607,8 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
               ),
             ),
 
-          // Rim Filter Chips
-          if (_availableRimSizes.isNotEmpty)
+          // Rim Filter Chips (only for tyres / when rim sizes exist)
+          if (_availableRimSizes.isNotEmpty && _selectedCategory != 'material')
             Container(
               height: 34,
               margin: const EdgeInsets.only(bottom: 8),
@@ -680,45 +647,43 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Showing ${_filteredTyres.length} tyres',
+                  'Showing ${_filteredTyres.length} items from catalog',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade700,
                   ),
                 ),
-                InkWell(
-                  onTap: _showAddCustomDialog,
-                  borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 16, color: AppTheme.primaryColor),
-                        SizedBox(width: 4),
-                        Text(
-                          'Custom Tyre',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ],
+                const Spacer(),
+                if (_selectedBrand != null || _selectedRimSize != null || _selectedCategory != 'all' || _searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedBrand = null;
+                        _selectedRimSize = null;
+                        _selectedCategory = 'all';
+                        _searchController.clear();
+                        _filterCatalog();
+                      });
+                    },
+                    child: Text(
+                      'Clear Filters',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
 
           const SizedBox(height: 4),
 
-          // Tyres List
+          // Items List
           Expanded(
             child: _filteredTyres.isEmpty
                 ? _buildEmptyState()
@@ -726,12 +691,67 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                     padding: EdgeInsets.fromLTRB(16, 4, 16, isKeyboardOpen ? 120 : 24),
                     itemCount: _filteredTyres.length,
                     itemBuilder: (context, index) {
-                      final tyre = _filteredTyres[index];
-                      return _buildTyreCard(tyre);
+                      final item = _filteredTyres[index];
+                      return _buildTyreCard(item);
                     },
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryTab({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryColor : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected ? Colors.white : Colors.grey.shade800,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -815,18 +835,21 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
     );
   }
 
-  Widget _buildTyreCard(Map<String, dynamic> tyre) {
-    final brand = (tyre['brand'] ?? 'Unknown').toString().trim();
-    final model = (tyre['model'] ?? '').toString().trim();
-    final size = (tyre['size'] ?? '').toString().trim();
-    final liSi = (tyre['li_si'] ?? '').toString().trim();
-    final tallyName = (tyre['tally_name'] ?? '').toString().trim();
+  Widget _buildTyreCard(Map<String, dynamic> item) {
+    final itemType = (item['item_type'] ?? 'tyre').toString().toLowerCase();
+    final isMaterial = itemType == 'material';
+    final brand = (item['brand'] ?? (isMaterial ? 'Material' : 'Unknown')).toString().trim();
+    final model = (item['model'] ?? '').toString().trim();
+    final size = (item['size'] ?? '').toString().trim();
+    final liSi = (item['li_si'] ?? '').toString().trim();
+    final tallyName = (item['tally_name'] ?? '').toString().trim();
+    final closingQtyText = (item['closing_qty_text'] ?? '').toString().trim();
 
-    final billingPrice = tyre['billing_price'] != null
-        ? double.tryParse(tyre['billing_price'].toString())
+    final billingPrice = item['billing_price'] != null
+        ? double.tryParse(item['billing_price'].toString())
         : null;
-    final basicPrice = tyre['basic_price'] != null
-        ? double.tryParse(tyre['basic_price'].toString())
+    final basicPrice = item['basic_price'] != null
+        ? double.tryParse(item['basic_price'].toString())
         : null;
     final displayPrice = billingPrice ?? basicPrice;
 
@@ -835,10 +858,15 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isMaterial ? Colors.amber.shade200 : Colors.grey.shade200,
+          width: isMaterial ? 1.2 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: isMaterial
+                ? Colors.amber.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -849,7 +877,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => widget.onTyreSelected(tyre),
+          onTap: () => widget.onTyreSelected(item),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -858,33 +886,67 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Brand Badge
+                    // Type Badge (Tyre or Material)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _getBrandColor(brand).withValues(alpha: 0.12),
+                        color: isMaterial ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: _getBrandColor(brand).withValues(alpha: 0.4),
+                          color: isMaterial ? const Color(0xFFF59E0B) : const Color(0xFF93C5FD),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isMaterial ? Icons.build_circle_outlined : Icons.tire_repair,
+                            size: 11,
+                            color: isMaterial ? const Color(0xFFB45309) : const Color(0xFF1D4ED8),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isMaterial ? 'MATERIAL' : 'TYRE',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: isMaterial ? const Color(0xFFB45309) : const Color(0xFF1D4ED8),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Brand / Group Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _getBrandColor(brand).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: _getBrandColor(brand).withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
                       child: Text(
                         brand.toUpperCase(),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.bold,
                           color: _getBrandColor(brand),
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
 
-                    // Size Badge
-                    if (size.isNotEmpty)
+                    // Size Badge (if available)
+                    if (size.isNotEmpty && size != '-') ...[
+                      const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(6),
@@ -893,17 +955,39 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                         child: Text(
                           size,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
                         ),
                       ),
+                    ],
+
+                    // Stock qty badge
+                    if (closingQtyText.isNotEmpty && closingQtyText != '0 nos') ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: Text(
+                          closingQtyText,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF047857),
+                          ),
+                        ),
+                      ),
+                    ],
 
                     if (liSi.isNotEmpty) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.orange.shade50,
                           borderRadius: BorderRadius.circular(4),
@@ -925,7 +1009,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                     // Price Badge
                     if (displayPrice != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: Colors.green.shade50,
                           borderRadius: BorderRadius.circular(8),
@@ -934,7 +1018,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
                         child: Text(
                           '₹${displayPrice.toStringAsFixed(2)}',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.bold,
                             color: Colors.green.shade800,
                           ),
@@ -945,7 +1029,7 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
 
                 const SizedBox(height: 8),
 
-                // Model name
+                // Model / Product name
                 Text(
                   model.isNotEmpty ? model : '$brand $size',
                   style: const TextStyle(
@@ -984,10 +1068,10 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.tire_repair_outlined, size: 54, color: Colors.grey.shade300),
+            Icon(Icons.inventory_2_outlined, size: 54, color: Colors.grey.shade300),
             const SizedBox(height: 12),
             Text(
-              'No matching tyres found',
+              'No matching items found',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -997,22 +1081,10 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
             const SizedBox(height: 6),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'No tyre found for "$_searchQuery".'
-                  : 'Try changing your filter criteria.',
+                  ? 'No product found for "$_searchQuery" in catalog.'
+                  : 'Try changing your filter criteria or switch to All.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _showAddCustomDialog,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add as Custom Tyre'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              ),
             ),
           ],
         ),
@@ -1032,6 +1104,9 @@ class _TyreCatalogPickerState extends State<TyreCatalogPicker> {
     if (lower.contains('goodyear')) return const Color(0xFFD97706);
     if (lower.contains('jk')) return const Color(0xFF059669);
     if (lower.contains('pirelli')) return const Color(0xFF4338CA);
+    if (lower.contains('valve')) return const Color(0xFFD97706);
+    if (lower.contains('accessories') || lower.contains('accessory')) return const Color(0xFF0D9488);
+    if (lower.contains('material')) return const Color(0xFF4F46E5);
     return const Color(0xFF475569);
   }
 }

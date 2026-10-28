@@ -45,70 +45,7 @@ class SupabaseService {
         return await searchTallyLedgerVehicle(vehicleNumber);
       }
 
-      // After finding the vehicle, get its most recent report to find the last odometer reading
-      var reportQuery = _client
-          .from('reports')
-          .select('odometer_reading, client_phone, "Owner name"') // ✅ Fetch client details too
-          .eq('vehicle_id', vehicleResponse['id']);
-      
-      // Apply company filter to reports as well
-      if (companyName != null && companyName.isNotEmpty) {
-        reportQuery = reportQuery.eq('company_name', companyName);
-      }
-      
-      final latestReport = await reportQuery
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      // Fetch owner details from owner_master table if available
-      Map<String, dynamic>? ownerDetails;
-      
-      // First try to get owner details via owner_id if it exists
-      if (vehicleResponse['owner_id'] != null) {
-        var ownerQuery = _client
-            .from('owner_master')
-            .select('id, "Owner name", "PhoneNumber", "MobileNumber", "Address Line1", "Address Line2", "Address Line3", state, country, pincode, email')
-            .eq('id', vehicleResponse['owner_id']);
-        
-        // Apply company filter to owner_master as well
-        if (companyName != null && companyName.isNotEmpty) {
-          ownerQuery = ownerQuery.eq('company_name', companyName);
-        }
-        
-        ownerDetails = await ownerQuery.maybeSingle();
-      }
-      
-      // If no owner_id or no owner found, try by MobileNumber
-      if (ownerDetails == null) {
-        final mobileNumber = latestReport?['client_phone'] ?? vehicleResponse['MobileNumber'];
-        if (mobileNumber != null && mobileNumber.isNotEmpty) {
-          var ownerQuery = _client
-              .from('owner_master')
-              .select('id, "Owner name", "PhoneNumber", "MobileNumber", "Address Line1", "Address Line2", "Address Line3", state, country, pincode, email')
-              .eq('MobileNumber', mobileNumber);
-          
-          // Apply company filter to owner_master as well
-          if (companyName != null && companyName.isNotEmpty) {
-            ownerQuery = ownerQuery.eq('company_name', companyName);
-          }
-          
-          ownerDetails = await ownerQuery.maybeSingle();
-        }
-      }
-
-      // Prioritize details from the latest report if available
-      final latestOdometer = latestReport?['odometer_reading'] ?? vehicleResponse['odometer'];
-      final latestClientPhone = latestReport?['client_phone'] ?? vehicleResponse['MobileNumber'];
-      final latestClientName = latestReport?['Owner name'] ?? vehicleResponse['Owner name'];
-
-      // Add/Overwrite details in the response map
-      vehicleResponse['latest_odometer'] = latestOdometer;
-      vehicleResponse['latest_client_phone'] = latestClientPhone; // Use a distinct key
-      vehicleResponse['latest_client_name'] = latestClientName; // Client name from latest report
-      vehicleResponse['owner_details'] = ownerDetails; // Add owner details
-
-      return vehicleResponse;
+      return await _enrichVehicleDetails(vehicleResponse, companyName: companyName);
     } on PostgrestException catch (e) {
       if (kDebugMode) {
         print('Supabase error searching vehicle: ${e.message}');
@@ -121,6 +58,217 @@ class SupabaseService {
     } catch (e) {
       if (kDebugMode) {
         print('Error searching vehicle: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Enriches a raw vehicle record with latest report odometer/client info and owner details
+  Future<Map<String, dynamic>> _enrichVehicleDetails(
+    Map<String, dynamic> rawVehicle, {
+    String? companyName,
+  }) async {
+    final vehicleResponse = Map<String, dynamic>.from(rawVehicle);
+
+    // After finding the vehicle, get its most recent report to find the last odometer reading
+    var reportQuery = _client
+        .from('reports')
+        .select('odometer_reading, client_phone, "Owner name"')
+        .eq('vehicle_id', vehicleResponse['id']);
+
+    if (companyName != null && companyName.isNotEmpty) {
+      reportQuery = reportQuery.eq('company_name', companyName);
+    }
+
+    final latestReport = await reportQuery
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    // Fetch owner details from owner_master table if available
+    Map<String, dynamic>? ownerDetails;
+
+    // First try to get owner details via owner_id if it exists
+    if (vehicleResponse['owner_id'] != null) {
+      var ownerQuery = _client
+          .from('owner_master')
+          .select('id, "Owner name", "PhoneNumber", "MobileNumber", "Address Line1", "Address Line2", "Address Line3", state, country, pincode, email, "GST Number"')
+          .eq('id', vehicleResponse['owner_id']);
+
+      if (companyName != null && companyName.isNotEmpty) {
+        ownerQuery = ownerQuery.eq('company_name', companyName);
+      }
+
+      ownerDetails = await ownerQuery.maybeSingle();
+    }
+
+    // If no owner_id or no owner found, try by MobileNumber
+    if (ownerDetails == null) {
+      final mobileNumber = latestReport?['client_phone'] ?? vehicleResponse['MobileNumber'];
+      if (mobileNumber != null && mobileNumber.toString().isNotEmpty) {
+        var ownerQuery = _client
+            .from('owner_master')
+            .select('id, "Owner name", "PhoneNumber", "MobileNumber", "Address Line1", "Address Line2", "Address Line3", state, country, pincode, email, "GST Number"')
+            .eq('MobileNumber', mobileNumber);
+
+        if (companyName != null && companyName.isNotEmpty) {
+          ownerQuery = ownerQuery.eq('company_name', companyName);
+        }
+
+        ownerDetails = await ownerQuery.maybeSingle();
+      }
+    }
+
+    // Prioritize details from the latest report if available
+    final latestOdometer = latestReport?['odometer_reading'] ?? vehicleResponse['odometer'];
+    final latestClientPhone = latestReport?['client_phone'] ?? vehicleResponse['MobileNumber'];
+    final latestClientName = latestReport?['Owner name'] ?? vehicleResponse['Owner name'];
+
+    // Add/Overwrite details in the response map
+    vehicleResponse['latest_odometer'] = latestOdometer;
+    vehicleResponse['latest_client_phone'] = latestClientPhone;
+    vehicleResponse['latest_client_name'] = latestClientName;
+    vehicleResponse['owner_details'] = ownerDetails;
+
+    return vehicleResponse;
+  }
+
+  /// Searches for vehicles by customer mobile number across vehicles, owner_master, and reports.
+  /// Returns a list of all matching enriched vehicle records.
+  Future<List<Map<String, dynamic>>> searchVehiclesByMobileNumber(
+    String mobileNumber, {
+    String? companyName,
+  }) async {
+    try {
+      final digitsOnly = mobileNumber.replaceAll(RegExp(r'\D'), '');
+      if (digitsOnly.length < 10) return [];
+      final last10 = digitsOnly.substring(digitsOnly.length - 10);
+
+      final Map<dynamic, Map<String, dynamic>> matchedVehicles = {};
+
+      // 1. Search directly in vehicles by MobileNumber
+      var vehicleByPhoneQuery = _client
+          .from('vehicles')
+          .select('*, vehicle_models!inner(brand, "Model name"), owner_id')
+          .ilike('MobileNumber', '%$last10%');
+
+      if (companyName != null && companyName.isNotEmpty) {
+        vehicleByPhoneQuery = vehicleByPhoneQuery.eq('company_name', companyName);
+      }
+
+      final vehiclesByPhone = await vehicleByPhoneQuery;
+      for (final v in vehiclesByPhone) {
+        if (v['id'] != null) {
+          matchedVehicles[v['id']] = v;
+        }
+      }
+
+      // 2. Search in owner_master by PhoneNumber or MobileNumber
+      var ownerQuery = _client
+          .from('owner_master')
+          .select('id')
+          .or('"PhoneNumber".ilike.%$last10%,"MobileNumber".ilike.%$last10%');
+
+      if (companyName != null && companyName.isNotEmpty) {
+        ownerQuery = ownerQuery.eq('company_name', companyName);
+      }
+
+      final owners = await ownerQuery;
+      final ownerIds = owners.map((o) => o['id']).where((id) => id != null).toList();
+
+      if (ownerIds.isNotEmpty) {
+        var vehicleByOwnerQuery = _client
+            .from('vehicles')
+            .select('*, vehicle_models!inner(brand, "Model name"), owner_id')
+            .inFilter('owner_id', ownerIds);
+
+        if (companyName != null && companyName.isNotEmpty) {
+          vehicleByOwnerQuery = vehicleByOwnerQuery.eq('company_name', companyName);
+        }
+
+        final vehiclesByOwner = await vehicleByOwnerQuery;
+        for (final v in vehiclesByOwner) {
+          if (v['id'] != null) {
+            matchedVehicles[v['id']] = v;
+          }
+        }
+      }
+
+      // 3. Search in reports by client_phone
+      var reportQuery = _client
+          .from('reports')
+          .select('vehicle_id')
+          .ilike('client_phone', '%$last10%')
+          .not('vehicle_id', 'is', null);
+
+      if (companyName != null && companyName.isNotEmpty) {
+        reportQuery = reportQuery.eq('company_name', companyName);
+      }
+
+      final reports = await reportQuery;
+      final reportVehicleIds = reports
+          .map((r) => r['vehicle_id'])
+          .where((id) => id != null && !matchedVehicles.containsKey(id))
+          .toSet()
+          .toList();
+
+      if (reportVehicleIds.isNotEmpty) {
+        var vehicleByReportQuery = _client
+            .from('vehicles')
+            .select('*, vehicle_models!inner(brand, "Model name"), owner_id')
+            .inFilter('id', reportVehicleIds);
+
+        if (companyName != null && companyName.isNotEmpty) {
+          vehicleByReportQuery = vehicleByReportQuery.eq('company_name', companyName);
+        }
+
+        final vehiclesByReport = await vehicleByReportQuery;
+        for (final v in vehiclesByReport) {
+          if (v['id'] != null) {
+            matchedVehicles[v['id']] = v;
+          }
+        }
+      }
+
+      // 4. Enrich all found vehicles
+      final List<Map<String, dynamic>> results = [];
+      for (final vehicle in matchedVehicles.values) {
+        final enriched = await _enrichVehicleDetails(vehicle, companyName: companyName);
+        results.add(enriched);
+      }
+
+      return results;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error searching vehicles by mobile number: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Fetches owner record from owner_master by mobile number if exists
+  Future<Map<String, dynamic>?> searchOwnerByMobileNumber(String mobileNumber, {String? companyName}) async {
+    try {
+      final digitsOnly = mobileNumber.replaceAll(RegExp(r'\D'), '');
+      if (digitsOnly.length < 10) return null;
+      final last10 = digitsOnly.substring(digitsOnly.length - 10);
+
+      var query = _client
+          .from('owner_master')
+          .select('id, "Owner name", "PhoneNumber", "MobileNumber", "Address Line1", "Address Line2", "Address Line3", state, country, pincode, email, "GST Number"');
+
+      if (companyName != null && companyName.isNotEmpty) {
+        query = query.eq('company_name', companyName);
+      }
+
+      final res = await query
+          .or('"PhoneNumber".ilike.%$last10%,"MobileNumber".ilike.%$last10%')
+          .limit(1)
+          .maybeSingle();
+      return res;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error searching owner by mobile number: $e');
       }
       return null;
     }
@@ -1765,7 +1913,7 @@ class SupabaseService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getTyreCatalog({String? companyName}) async {
+  Future<List<Map<String, dynamic>>> getTyreCatalog({String? companyName, bool includeAllStock = true}) async {
     try {
       final List<Map<String, dynamic>> all = [];
       const int pageSize = 1000;
@@ -1779,10 +1927,69 @@ class SupabaseService {
             .order('size')
             .range(from, from + pageSize - 1);
         final batch = List<Map<String, dynamic>>.from(response);
+        for (final row in batch) {
+          row['item_type'] = 'tyre';
+        }
         all.addAll(batch);
         if (batch.length < pageSize) break;
         from += pageSize;
       }
+
+      if (includeAllStock) {
+        // Also fetch from tally_stock_items for all materials, valves, accessories, etc.
+        try {
+          final Set<String> existingNames = all
+              .map((e) => (e['tally_name'] ?? e['model'] ?? '').toString().trim().toLowerCase())
+              .where((s) => s.isNotEmpty)
+              .toSet();
+
+          int stockFrom = 0;
+          while (true) {
+            final stockResp = await _client
+                .from('tally_stock_items')
+                .select('id, name, stock_group, category, selling_price, cost_price, closing_rate, closing_qty, closing_qty_text, guid, tally_company')
+                .order('name')
+                .range(stockFrom, stockFrom + pageSize - 1);
+            final stockBatch = List<Map<String, dynamic>>.from(stockResp);
+            for (final item in stockBatch) {
+              final name = (item['name'] ?? '').toString().trim();
+              if (name.isEmpty) continue;
+              final lower = name.toLowerCase();
+              if (existingNames.contains(lower)) continue;
+
+              final group = (item['stock_group'] ?? '').toString().trim();
+              final category = (item['category'] ?? '').toString().trim();
+              final price = item['selling_price'] ?? item['closing_rate'] ?? item['cost_price'];
+
+              all.add({
+                'id': item['id'],
+                'brand': group.isNotEmpty ? group : (category.isNotEmpty ? category : 'Material'),
+                'model': name,
+                'size': '',
+                'li_si': null,
+                'basic_price': item['cost_price'] ?? item['closing_rate'],
+                'billing_price': price != null ? double.tryParse(price.toString()) : null,
+                'tally_name': name,
+                'company_name': item['tally_company'],
+                'guid': item['guid'],
+                'item_type': 'material',
+                'stock_group': group,
+                'category': category,
+                'closing_qty': item['closing_qty'],
+                'closing_qty_text': item['closing_qty_text'],
+              });
+              existingNames.add(lower);
+            }
+            if (stockBatch.length < pageSize) break;
+            stockFrom += pageSize;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error fetching additional stock items: $e');
+          }
+        }
+      }
+
       return all;
     } catch (e) {
       if (kDebugMode) {
@@ -1925,10 +2132,22 @@ class SupabaseService {
             final accType = (row['account_type'] ?? '').toString().toLowerCase();
             if (accType == 'group') continue;
 
-            final parentGroup = (row['parent_group'] ?? 'Services').toString().trim();
-            // Ensure no customer ledgers / sundry debtors appear in service catalog
+            final parentGroup = (row['parent_group'] ?? 'Service Income').toString().trim();
             final parentLower = parentGroup.toLowerCase();
-            if (parentLower.contains('debtor') || parentLower.contains('creditor') || parentLower.contains('bank') || parentLower.contains('cash')) {
+
+            // Hide Sales Accounts and non-service ledgers
+            if (parentLower == 'sales accounts' ||
+                parentLower.contains('sales account') ||
+                parentLower.contains('debtor') ||
+                parentLower.contains('creditor') ||
+                parentLower.contains('bank') ||
+                parentLower.contains('cash')) {
+              continue;
+            }
+
+            // Only show service income accounts
+            final isServiceIncome = parentLower.contains('service') || parentLower.contains('income');
+            if (!isServiceIncome) {
               continue;
             }
 
@@ -1960,6 +2179,8 @@ class SupabaseService {
       try {
         final legacy = await _client.from('service_catalog').select().order('name');
         for (final row in legacy) {
+          final cat = (row['category'] ?? '').toString().toLowerCase();
+          if (cat.contains('sales account') || cat == 'sales accounts') continue;
           final name = (row['name'] ?? '').toString().trim();
           if (name.isNotEmpty && !all.any((s) => s['name'].toString().toLowerCase() == name.toLowerCase())) {
             all.add(Map<String, dynamic>.from(row));

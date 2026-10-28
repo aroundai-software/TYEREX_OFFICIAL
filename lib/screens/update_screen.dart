@@ -1047,162 +1047,6 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
     );
   }
 
-  void _showAddWorkModal() {
-    final nameController = TextEditingController();
-    final amountController = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Add Work / Service',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Catalog Quick Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showServiceCatalogModal();
-                      },
-                      icon: const Icon(Icons.list_alt, size: 16),
-                      label: const Text('Services', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryColor,
-                        side: const BorderSide(color: AppTheme.primaryColor),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _openTyreCatalogPicker();
-                      },
-                      icon: const Icon(Icons.tire_repair, size: 16),
-                      label: const Text('Tyres', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue.shade700,
-                        side: BorderSide(color: Colors.blue.shade700),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _openAlloyCatalogPicker();
-                      },
-                      icon: const Icon(Icons.album_outlined, size: 16),
-                      label: const Text('Alloys', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF0D9488),
-                        side: const BorderSide(color: Color(0xFF0D9488)),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Row(
-                children: [
-                  Expanded(child: Divider(color: Color(0xFFE5E7EB))),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('OR CUSTOM WORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF))),
-                  ),
-                  Expanded(child: Divider(color: Color(0xFFE5E7EB))),
-                ],
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Custom Work / Service Name',
-                  hintText: 'e.g. Denting, Painting, Custom Repair',
-                  prefixIcon: const Icon(Icons.build_circle_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Amount (₹)',
-                  hintText: '0',
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add_rounded, size: 20),
-                  label: const Text('Add to Works', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    final text = nameController.text.trim();
-                    final amt = double.tryParse(amountController.text.trim()) ?? 0.0;
-                    if (text.isNotEmpty) {
-                      _addWorkItem(text, amt);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   void _addMaterial(String approvedItemText) {
     final controller = _materialControllers[approvedItemText];
@@ -3010,6 +2854,8 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                     onPressed: () => Navigator.of(context).pop(),
                   )
                 : null,
+            titleSpacing: widget.isAdminMode ? 0 : null,
+            centerTitle: false,
             title: _isSearchingMain
                 ? TextField(
                     controller: _mainSearchController,
@@ -3025,12 +2871,16 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'Job Cards',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 22,
-                          color: AppTheme.primaryColor,
+                      const Flexible(
+                        child: Text(
+                          'Job Cards',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            color: AppTheme.primaryColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -3039,7 +2889,6 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                   ),
             backgroundColor: Colors.white,
             elevation: 0,
-            centerTitle: true,
             actions: [
               if (_isSearchingMain)
                 IconButton(
@@ -3758,6 +3607,17 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                           onSelected: (value) {
                             if (value == 'edit_jobcard') {
                               HapticUtils.medium();
+                              if (isCourier || tabName == 'Couriers') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => JobCardScreen(draftJob: job),
+                                  ),
+                                ).then((_) {
+                                  _refreshData();
+                                });
+                                return;
+                              }
                               _selectJob(job['id'], sourceTab: tabName);
                               setState(() {
                                 _isInlineEditing = true;
@@ -4423,7 +4283,10 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final bool isExecutive = (userProvider.user?['role'] == AppConstants.roleExecutive) && !widget.isAdminMode;
     final bool isEditable = (_isInlineEditing || _openedFromTab == 'Drafts') && !isCancelled && isExecutive;
-    final bool isCourier = _currentVehicleNo == 'Courier Package';
+    final bool isCourier = _currentVehicleNo == 'Courier Package' ||
+        _currentMarks?['is_courier'] == true ||
+        _currentMarks?['is_courier'] == 'true' ||
+        (_currentRawJob != null && _currentRawJob!['vehicle_id'] == null && _currentRawJob!['complaint']?.toString().contains('Courier') == true);
 
     if (kDebugMode) {
       debugPrint('--- _buildUpdateForm Visibility Check ---');
@@ -4474,15 +4337,27 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
           if (isExecutive && _currentReportId != null)
             IconButton(
               icon: Icon(
-                _isInlineEditing ? Icons.edit_off_rounded : Icons.edit_note_rounded,
-                color: _isInlineEditing ? Colors.orange : AppTheme.primaryColor,
+                isCourier ? Icons.edit_note_rounded : (_isInlineEditing ? Icons.edit_off_rounded : Icons.edit_note_rounded),
+                color: isCourier ? AppTheme.primaryColor : (_isInlineEditing ? Colors.orange : AppTheme.primaryColor),
                 size: 28,
               ),
-              tooltip: _isInlineEditing ? 'Cancel Edit' : 'Edit Job Card',
+              tooltip: isCourier ? 'Edit Courier Job Card' : (_isInlineEditing ? 'Cancel Edit' : 'Edit Job Card'),
               onPressed: isFormBusy
                   ? null
                   : () {
                       HapticUtils.selection();
+                      if (isCourier && _currentRawJob != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => JobCardScreen(draftJob: _currentRawJob),
+                          ),
+                        ).then((_) {
+                          _refreshData();
+                          _resetUpdateFormComplete();
+                        });
+                        return;
+                      }
                       setState(() {
                         _isInlineEditing = !_isInlineEditing;
                       });
@@ -5212,6 +5087,30 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                               ),
                             ),
                           ),
+                          if (isExecutive)
+                            OutlinedButton.icon(
+                              onPressed: isFormBusy || _currentRawJob == null
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => JobCardScreen(draftJob: _currentRawJob),
+                                        ),
+                                      ).then((_) {
+                                        _refreshData();
+                                        _resetUpdateFormComplete();
+                                      });
+                                    },
+                              icon: const Icon(Icons.edit, size: 14),
+                              label: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.primaryColor,
+                                side: const BorderSide(color: AppTheme.primaryColor),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -5614,21 +5513,6 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _showAddWorkModal,
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('+ Custom Work / Service', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.primaryColor,
-                            side: const BorderSide(color: AppTheme.primaryColor),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
                       ),
                     ],
                     const SizedBox(height: 20),
@@ -6045,6 +5929,35 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                         ),
                       ),
                     ),
+                  ] else if (isCourier) ...[
+                    if (isExecutive)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: isFormBusy || _currentRawJob == null
+                              ? null
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => JobCardScreen(draftJob: _currentRawJob),
+                                    ),
+                                  ).then((_) {
+                                    _refreshData();
+                                    _resetUpdateFormComplete();
+                                  });
+                                },
+                          icon: const Icon(Icons.edit_note_rounded, size: 22),
+                          label: const Text('Edit Courier Job Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
                   ] else if (_openedFromTab == 'Completed Jobs' || _currentStatus == AppConstants.statusCompleted || _currentStatus == 'completed') ...[
                     if (_isInlineEditing)
                       SizedBox(
@@ -6107,6 +6020,61 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                     ),
                   ],
                   if (_currentStatus == AppConstants.statusEditRequested) ...[
+                    Builder(
+                      builder: (context) {
+                        String? editReason;
+                        final rawMarks = _currentRawJob?['marks'];
+                        if (rawMarks != null) {
+                          if (rawMarks is Map) {
+                            editReason = rawMarks['edit_request_reason']?.toString();
+                          } else if (rawMarks is String) {
+                            try {
+                              final decoded = jsonDecode(rawMarks);
+                              if (decoded is Map) editReason = decoded['edit_request_reason']?.toString();
+                            } catch (_) {}
+                          }
+                        }
+                        if (editReason != null && editReason.trim().isNotEmpty) {
+                          return Container(
+                            margin: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFFDBA74)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.info_outline, color: Color(0xFFC2410C), size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Accountant Edit Note:',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFC2410C),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        editReason,
+                                        style: const TextStyle(fontSize: 13, color: Color(0xFF7C2D12), fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
@@ -6138,7 +6106,7 @@ class _UpdateScreenState extends State<UpdateScreen> with SingleTickerProviderSt
                         ),
                       ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),

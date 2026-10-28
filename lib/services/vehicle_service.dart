@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_constants.dart';
 import '../providers/user_provider.dart';
 import 'company_service.dart';
+import 'supabase_service.dart';
 
 /// Comprehensive service for all vehicle-related operations
 /// Company filtering has been removed - operations work across all data
@@ -45,6 +46,7 @@ class VehicleService {
             sanitized.remove('owner_id');
             sanitized.remove('branch_id');
             sanitized.remove('company_id');
+            sanitized.remove('Guid');
             await _client
                 .from('vehicles')
                 .update(sanitized)
@@ -63,6 +65,7 @@ class VehicleService {
             sanitized.remove('owner_id');
             sanitized.remove('branch_id');
             sanitized.remove('company_id');
+            sanitized.remove('Guid');
             await _client.from('vehicles').insert(sanitized);
           } else {
             rethrow;
@@ -87,6 +90,15 @@ class VehicleService {
       return response;
     } catch (e) {
       throw Exception('Failed to search vehicle: $e');
+    }
+  }
+
+  /// Search vehicles by mobile number
+  Future<List<Map<String, dynamic>>> searchVehiclesByMobile(BuildContext context, String mobileNumber) async {
+    try {
+      return await SupabaseService().searchVehiclesByMobileNumber(mobileNumber);
+    } catch (e) {
+      throw Exception('Failed to search vehicles by mobile: $e');
     }
   }
 

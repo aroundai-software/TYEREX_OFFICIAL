@@ -190,6 +190,11 @@ class _JobCardScreenState extends State<JobCardScreen> {
   bool _clientPhoneDiffers = false;
   bool _isBuyback = false;
 
+  // ✅ Search by Mobile variables
+  bool _searchByMobile = false;
+  final _mobileSearchController = TextEditingController();
+  String? _mobileSearchError;
+
   // Courier State
   bool _isCourierMode = false;
   final _courierNameController = TextEditingController();
@@ -197,9 +202,12 @@ class _JobCardScreenState extends State<JobCardScreen> {
   final _courierAddressController = TextEditingController();
   final _courierGstController = TextEditingController();
   final List<dynamic> _courierPhotos = [];
-  String? _courierTyreBrand;
-  String? _courierTyreModel;
-  String? _courierTyreSize;
+  String _courierCategory = 'Tyre'; // 'Tyre' or 'Alloy'
+  String? _courierProductBrand;
+  String? _courierProductModel;
+  String? _courierProductSize;
+
+
   
   final _courierProductPriceController = TextEditingController();
   final _courierProductQtyController = TextEditingController(text: '1');
@@ -207,22 +215,25 @@ class _JobCardScreenState extends State<JobCardScreen> {
   int? _editingCourierProductIndex;
 
   void _addCourierProduct() {
-    if (_courierTyreBrand == null || _courierTyreModel == null || _courierTyreSize == null) {
+    if (_courierProductBrand == null || _courierProductModel == null || _courierProductSize == null) {
       _showErrorSnackBar('Please select Brand, Model, and Size.');
       return;
     }
     
     final price = double.tryParse(_courierProductPriceController.text) ?? 0.0;
     final qty = int.tryParse(_courierProductQtyController.text) ?? 1;
+    final isAlloy = _courierCategory == 'Alloy';
+    final categoryPrefix = isAlloy ? 'Alloy - ' : 'Tyre - ';
 
     setState(() {
       if (_editingCourierProductIndex != null) {
         final existingImages = _courierProductsList[_editingCourierProductIndex!]['qr_images'] as List<dynamic>? ?? [];
         _courierProductsList[_editingCourierProductIndex!] = {
-          'brand': _courierTyreBrand,
-          'model': _courierTyreModel,
-          'size': _courierTyreSize,
-          'name': '$_courierTyreBrand $_courierTyreModel - $_courierTyreSize',
+          'category': _courierCategory,
+          'brand': _courierProductBrand,
+          'model': _courierProductModel,
+          'size': _courierProductSize,
+          'name': '$categoryPrefix$_courierProductBrand $_courierProductModel - $_courierProductSize',
           'price': price,
           'qty': qty,
           'qr_images': existingImages, 
@@ -230,9 +241,10 @@ class _JobCardScreenState extends State<JobCardScreen> {
         _editingCourierProductIndex = null;
       } else {
         int existingIndex = _courierProductsList.indexWhere((p) => 
-          p['brand'] == _courierTyreBrand && 
-          p['model'] == _courierTyreModel && 
-          p['size'] == _courierTyreSize
+          (p['category'] ?? (p['name']?.toString().startsWith('Alloy') == true ? 'Alloy' : 'Tyre')) == _courierCategory &&
+          p['brand'] == _courierProductBrand && 
+          p['model'] == _courierProductModel && 
+          p['size'] == _courierProductSize
         );
 
         if (existingIndex != -1) {
@@ -240,10 +252,11 @@ class _JobCardScreenState extends State<JobCardScreen> {
           _courierProductsList[existingIndex]['price'] = price; 
         } else {
           _courierProductsList.add({
-            'brand': _courierTyreBrand,
-            'model': _courierTyreModel,
-            'size': _courierTyreSize,
-            'name': '$_courierTyreBrand $_courierTyreModel - $_courierTyreSize',
+            'category': _courierCategory,
+            'brand': _courierProductBrand,
+            'model': _courierProductModel,
+            'size': _courierProductSize,
+            'name': '$categoryPrefix$_courierProductBrand $_courierProductModel - $_courierProductSize',
             'price': price,
             'qty': qty,
             'qr_images': <dynamic>[], 
@@ -251,9 +264,9 @@ class _JobCardScreenState extends State<JobCardScreen> {
         }
       }
       
-      _courierTyreBrand = null;
-      _courierTyreModel = null;
-      _courierTyreSize = null;
+      _courierProductBrand = null;
+      _courierProductModel = null;
+      _courierProductSize = null;
       _courierProductPriceController.clear();
       _courierProductQtyController.text = '1';
     });
@@ -268,9 +281,10 @@ class _JobCardScreenState extends State<JobCardScreen> {
   void _editCourierProduct(int index) {
     final p = _courierProductsList[index];
     setState(() {
-      _courierTyreBrand = p['brand'];
-      _courierTyreModel = p['model'];
-      _courierTyreSize = p['size'];
+      _courierCategory = (p['category'] ?? (p['name']?.toString().startsWith('Alloy') == true ? 'Alloy' : 'Tyre')).toString();
+      _courierProductBrand = p['brand'];
+      _courierProductModel = p['model'];
+      _courierProductSize = p['size'];
       _courierProductQtyController.text = p['qty'].toString();
       _courierProductPriceController.text = p['price'].toString();
       _editingCourierProductIndex = index;
@@ -280,16 +294,18 @@ class _JobCardScreenState extends State<JobCardScreen> {
   void _cancelEditCourierProduct() {
     setState(() {
       _editingCourierProductIndex = null;
-      _courierTyreBrand = null;
-      _courierTyreModel = null;
-      _courierTyreSize = null;
+      _courierProductBrand = null;
+      _courierProductModel = null;
+      _courierProductSize = null;
       _courierProductPriceController.clear();
       _courierProductQtyController.text = '1';
     });
   }
 
   Future<void> _scanCourierProductQR(int index) async {
-    final qty = _courierProductsList[index]['qty'] as int;
+    final qty = (_courierProductsList[index]['qty'] is int)
+        ? _courierProductsList[index]['qty'] as int
+        : (int.tryParse(_courierProductsList[index]['qty']?.toString() ?? '1') ?? 1);
     final currentPhotos = _courierProductsList[index]['qr_images'] as List<dynamic>? ?? [];
     
     int remaining = qty - currentPhotos.length;
@@ -509,26 +525,32 @@ class _JobCardScreenState extends State<JobCardScreen> {
         }
       }
       
-      final bool isCourier = marks['is_courier'] == true;
+      final bool isCourier = marks['is_courier'] == true ||
+          marks['is_courier'] == 'true' ||
+          (widget.draftJob!['vehicle_id'] == null &&
+              (widget.draftJob!['complaint']?.toString().contains('Courier') == true ||
+                  widget.draftJob!['job_card_id']?.toString().contains('COU') == true));
       _isCourierMode = isCourier;
 
       if (isCourier) {
-        _courierNameController.text = widget.draftJob!['Owner name'] ?? '';
-        _courierPhoneController.text = widget.draftJob!['client_phone'] ?? '';
-        _courierAddressController.text = marks['address'] ?? '';
-        _courierGstController.text = marks['gst_no'] ?? '';
+        _courierNameController.text = (widget.draftJob!['Owner name'] ?? widget.draftJob!['owner_name'] ?? '').toString();
+        _courierPhoneController.text = (widget.draftJob!['client_phone'] ?? widget.draftJob!['phone'] ?? '').toString();
+        _courierAddressController.text = (marks['address'] ?? '').toString();
+        _courierGstController.text = (marks['gst_no'] ?? '').toString();
         
         final productsList = marks['products'];
         if (productsList != null && productsList is List) {
           _courierProductsList.clear();
           for (var p in productsList) {
+            final category = (p['category'] ?? (p['is_alloy'] == true ? 'Alloy' : ((p['name'] ?? '').toString().startsWith('Alloy') ? 'Alloy' : 'Tyre'))).toString();
             _courierProductsList.add({
+              'category': category,
               'brand': p['brand'],
               'model': p['model'],
               'size': p['size'],
-              'name': p['name'],
-              'price': double.tryParse(p['price'].toString()) ?? 0.0,
-              'qty': p['qty'],
+              'name': p['name'] ?? '$category ${p['brand'] ?? ''} ${p['model'] ?? ''} - ${p['size'] ?? ''}',
+              'price': double.tryParse(p['price']?.toString() ?? '0') ?? 0.0,
+              'qty': int.tryParse(p['qty']?.toString() ?? '1') ?? 1,
               'qr_images': <dynamic>[],
             });
           }
@@ -732,7 +754,11 @@ class _JobCardScreenState extends State<JobCardScreen> {
 
       if (brand.isNotEmpty) _tyreBrandController.text = brand;
       if (model.isNotEmpty) _tyreModelController.text = model;
-      if (size.isNotEmpty) _tyreSizeController.text = size;
+      if (size.isNotEmpty && size != '-') {
+        _tyreSizeController.text = size;
+      } else {
+        _tyreSizeController.clear();
+      }
       if (liSi.isNotEmpty) _tyreLiSiController.text = liSi;
 
       final billingPrice = tyre['billing_price'] != null
@@ -749,9 +775,10 @@ class _JobCardScreenState extends State<JobCardScreen> {
       _syncTyreComplaint();
     });
 
+    final sizeText = _tyreSizeController.text.trim();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Selected: ${_tyreBrandController.text} ${_tyreModelController.text} (${_tyreSizeController.text})'),
+        content: Text('Selected: ${_tyreBrandController.text} ${_tyreModelController.text}${sizeText.isNotEmpty ? " ($sizeText)" : ""}'),
         backgroundColor: AppTheme.primaryColor,
         duration: const Duration(seconds: 2),
       ),
@@ -767,16 +794,17 @@ class _JobCardScreenState extends State<JobCardScreen> {
     final selected = await TyreCatalogPicker.show(
       context,
       tyreCatalog: _tyreCatalog,
-      initialBrand: forCourier ? _courierTyreBrand : (_tyreBrandController.text.trim().isNotEmpty ? _tyreBrandController.text.trim() : null),
-      initialSize: forCourier ? _courierTyreSize : (_tyreSizeController.text.trim().isNotEmpty ? _tyreSizeController.text.trim() : null),
+      initialBrand: forCourier ? _courierProductBrand : (_tyreBrandController.text.trim().isNotEmpty ? _tyreBrandController.text.trim() : null),
+      initialSize: forCourier ? _courierProductSize : (_tyreSizeController.text.trim().isNotEmpty ? _tyreSizeController.text.trim() : null),
     );
 
     if (selected != null && mounted) {
       if (forCourier) {
         setState(() {
-          _courierTyreBrand = (selected['brand'] ?? '').toString().trim();
-          _courierTyreModel = (selected['model'] ?? '').toString().trim();
-          _courierTyreSize = (selected['size'] ?? '').toString().trim();
+          _courierCategory = 'Tyre';
+          _courierProductBrand = (selected['brand'] ?? '').toString().trim();
+          _courierProductModel = (selected['model'] ?? '').toString().trim();
+          _courierProductSize = (selected['size'] ?? '').toString().trim();
 
           final billingPrice = selected['billing_price'] != null
               ? double.tryParse(selected['billing_price'].toString())
@@ -865,7 +893,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
     _syncAlloyComplaint();
   }
 
-  Future<void> _openAlloyCatalogPicker() async {
+  Future<void> _openAlloyCatalogPicker({bool forCourier = false}) async {
     if (_alloyCatalog.isEmpty) {
       await _fetchAlloyCatalog();
     }
@@ -874,34 +902,49 @@ class _JobCardScreenState extends State<JobCardScreen> {
     final selected = await AlloyCatalogPicker.show(
       context,
       alloyCatalog: _alloyCatalog,
-      initialBrand: _alloyBrandController.text.trim().isNotEmpty ? _alloyBrandController.text.trim() : null,
-      initialSize: _alloySizeController.text.trim().isNotEmpty ? _alloySizeController.text.trim() : null,
+      initialBrand: forCourier ? _courierProductBrand : (_alloyBrandController.text.trim().isNotEmpty ? _alloyBrandController.text.trim() : null),
+      initialSize: forCourier ? _courierProductSize : (_alloySizeController.text.trim().isNotEmpty ? _alloySizeController.text.trim() : null),
     );
 
     if (selected != null && mounted) {
-      setState(() {
-        final brand = (selected['brand'] ?? '').toString().trim();
-        final model = (selected['model'] ?? '').toString().trim();
-        final size = (selected['size'] ?? '').toString().trim();
-        final price = selected['selling_price'] ?? selected['billing_price'];
+      if (forCourier) {
+        setState(() {
+          _courierCategory = 'Alloy';
+          _courierProductBrand = (selected['brand'] ?? '').toString().trim();
+          _courierProductModel = (selected['model'] ?? '').toString().trim();
+          _courierProductSize = (selected['size'] ?? '').toString().trim();
 
-        if (brand.isNotEmpty) _alloyBrandController.text = brand;
-        if (model.isNotEmpty) _alloyModelController.text = model;
-        if (size.isNotEmpty) _alloySizeController.text = size;
-        if (price != null) {
-          final numP = double.tryParse(price.toString());
-          _alloyPriceController.text = numP != null ? numP.toStringAsFixed(2) : price.toString();
-        }
-        _syncAlloyComplaint();
-      });
+          final price = selected['selling_price'] ?? selected['billing_price'];
+          if (price != null) {
+            final numPrice = double.tryParse(price.toString());
+            _courierProductPriceController.text = numPrice != null ? numPrice.toStringAsFixed(2) : price.toString();
+          }
+        });
+      } else {
+        setState(() {
+          final brand = (selected['brand'] ?? '').toString().trim();
+          final model = (selected['model'] ?? '').toString().trim();
+          final size = (selected['size'] ?? '').toString().trim();
+          final price = selected['selling_price'] ?? selected['billing_price'];
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Selected Alloy: ${_alloyBrandController.text} ${_alloyModelController.text} (${_alloySizeController.text})'),
-          backgroundColor: const Color(0xFF0D9488),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+          if (brand.isNotEmpty) _alloyBrandController.text = brand;
+          if (model.isNotEmpty) _alloyModelController.text = model;
+          if (size.isNotEmpty) _alloySizeController.text = size;
+          if (price != null) {
+            final numP = double.tryParse(price.toString());
+            _alloyPriceController.text = numP != null ? numP.toStringAsFixed(2) : price.toString();
+          }
+          _syncAlloyComplaint();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Selected Alloy: ${_alloyBrandController.text} ${_alloyModelController.text} (${_alloySizeController.text})'),
+            backgroundColor: const Color(0xFF0D9488),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -910,6 +953,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
     _mainScrollController.dispose();
     _complaintFocusNode.dispose();
     _vehicleNumberController.dispose();
+    _mobileSearchController.dispose();
     _newVehicleNameController.dispose();
     _newColorController.dispose();
     _newOdometerController.dispose();
@@ -968,6 +1012,8 @@ class _JobCardScreenState extends State<JobCardScreen> {
   void _resetScreen() {
     setState(() {
       _vehicleNumberController.clear();
+      _mobileSearchController.clear();
+      _mobileSearchError = null;
       _vehicleDetails = null;
       _showCreateVehicleForm = false;
       _isVehicleJobCardDraft = false;
@@ -1047,6 +1093,74 @@ class _JobCardScreenState extends State<JobCardScreen> {
     }
   }
 
+  void _applyFoundVehicle(Map<String, dynamic> response, {bool isFromTally = false}) {
+    final latestOdometer = response['latest_odometer'];
+    final latestClientName = response['latest_client_name'];
+    final latestClientPhone = response['latest_client_phone'];
+    final ownerDetails = response['owner_details'];
+    final vehicleNumber = response['Vehicle Number']?.toString() ?? '';
+
+    if (kDebugMode) {
+      print('🔍 Applying vehicle: $vehicleNumber (from_tally: $isFromTally)');
+      print('👤 Owner details: $ownerDetails');
+      print('📱 Latest client phone: $latestClientPhone');
+    }
+
+    setState(() {
+      _vehicleNumberController.text = vehicleNumber;
+      _isFoundInTally = isFromTally;
+      _vehicleDetails = isFromTally ? null : response;
+      _currentVehicleId = response['id'];
+      _lastKnownOdometer = latestOdometer is int ? latestOdometer : int.tryParse(latestOdometer?.toString() ?? '');
+      _ownerDetails = ownerDetails;
+      _selectedOwnerId = ownerDetails?['id']?.toString() ?? response['owner_id']?.toString();
+
+      // Populate controllers with the LATEST info
+      _newClientNameController.text = ownerDetails?['Owner name'] ?? latestClientName ?? '';
+      _newClientPhoneController.text = ownerDetails?['PhoneNumber'] ?? latestClientPhone ?? '';
+      _newClientMobileController.text = ownerDetails?['MobileNumber'] ?? '';
+      _odometerController.text = latestOdometer?.toString() ?? '';
+      _newOdometerController.text = latestOdometer?.toString() ?? '';
+      _ownerGstController.text = ownerDetails?['GST Number'] ?? '';
+
+      if (isFromTally) {
+        _showCreateVehicleForm = true; // Show pre-filled create vehicle form
+        final detectedModel = (response['detected_model'] ?? '').toString().trim();
+        if (detectedModel.isNotEmpty) {
+          _matchAndSelectVehicleModel(detectedModel);
+        }
+      } else {
+        // Compare latest details with original vehicle record details
+        final originalName = (response['Owner name'] ?? '').toString().trim();
+        final originalPhone = (response['MobileNumber'] ?? '').toString().trim();
+
+        _clientNameDiffers = originalName.isNotEmpty &&
+            latestClientName != null &&
+            latestClientName.toString().trim().isNotEmpty &&
+            latestClientName.toString().trim().toLowerCase() != originalName.toLowerCase();
+
+        _clientPhoneDiffers = originalPhone.isNotEmpty &&
+            latestClientPhone != null &&
+            latestClientPhone.toString().trim().isNotEmpty &&
+            latestClientPhone.toString().trim() != originalPhone;
+
+        _showCreateVehicleForm = false; // Vehicle already registered
+      }
+    });
+
+    if (isFromTally && mounted) {
+      final ledgerName = response['tally_ledger_name'] ?? 'Tally';
+      final modelTxt = (response['detected_model'] ?? '').toString().trim();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Found in Tally ($ledgerName${modelTxt.isNotEmpty ? ' • $modelTxt' : ''})! Details pre-filled.'),
+          backgroundColor: const Color(0xFF0D9488),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Future<void> _searchVehicle() async {
     final rawVehicleNumber = _vehicleNumberController.text.trim();
     final normalizedVehicleNumber = VehicleNumberUtils.normalize(rawVehicleNumber);
@@ -1090,80 +1204,8 @@ class _JobCardScreenState extends State<JobCardScreen> {
           _ownerDetails = null;
         });
       } else {
-        // ✅ Use the new keys from the service response
-        final latestOdometer = response['latest_odometer'];
-        final latestClientName = response['latest_client_name'];
-        final latestClientPhone = response['latest_client_phone'];
-        final ownerDetails = response['owner_details'];
-
         final isFromTally = response['from_tally'] == true;
-
-        // Debug prints
-        if (kDebugMode) {
-          print('🔍 Vehicle found: ${response['Vehicle Number']} (from_tally: $isFromTally)');
-          print('👤 Owner details: $ownerDetails');
-          print('📱 Latest client phone: $latestClientPhone');
-        }
-
-        setState(() {
-          _isFoundInTally = isFromTally;
-          _vehicleDetails = isFromTally ? null : response;
-          _currentVehicleId = response['id'];
-          _lastKnownOdometer = latestOdometer;
-          _ownerDetails = ownerDetails;
-
-          // Populate controllers with the LATEST info
-          _newClientNameController.text = ownerDetails?['Owner name'] ?? latestClientName ?? '';
-          _newClientPhoneController.text = ownerDetails?['PhoneNumber'] ?? latestClientPhone ?? ''; // Client Phone -> PhoneNumber
-          _newClientMobileController.text = ownerDetails?['MobileNumber'] ?? ''; // Client Mobile -> MobileNumber
-          _odometerController.text = latestOdometer?.toString() ?? '';
-          _newOdometerController.text = latestOdometer?.toString() ?? '';
-
-          // Debug prints after population
-          if (kDebugMode) {
-            print('📝 Client name populated: ${_newClientNameController.text}');
-            print('📞 Client phone populated: ${_newClientPhoneController.text}');
-            print('📱 Client mobile populated: ${_newClientMobileController.text}');
-          }
-
-          _ownerGstController.text = ownerDetails?['GST Number'] ?? '';
-
-          if (isFromTally) {
-            _showCreateVehicleForm = true; // Show pre-filled create vehicle form
-            final detectedModel = (response['detected_model'] ?? '').toString().trim();
-            if (detectedModel.isNotEmpty) {
-              _matchAndSelectVehicleModel(detectedModel);
-            }
-          } else {
-            // Compare latest details with original vehicle record details
-            final originalName = (response['Owner name'] ?? '').toString().trim();
-            final originalPhone = (response['MobileNumber'] ?? '').toString().trim();
-
-            _clientNameDiffers = originalName.isNotEmpty &&
-                latestClientName != null &&
-                latestClientName.toString().trim().isNotEmpty &&
-                latestClientName.toString().trim().toLowerCase() != originalName.toLowerCase();
-
-            _clientPhoneDiffers = originalPhone.isNotEmpty &&
-                latestClientPhone != null &&
-                latestClientPhone.toString().trim().isNotEmpty &&
-                latestClientPhone.toString().trim() != originalPhone;
-
-            _showCreateVehicleForm = false; // Vehicle already registered
-          }
-        });
-
-        if (isFromTally && mounted) {
-          final ledgerName = response['tally_ledger_name'] ?? 'Tally';
-          final modelTxt = (response['detected_model'] ?? '').toString().trim();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Found in Tally ($ledgerName${modelTxt.isNotEmpty ? ' • $modelTxt' : ''})! Details pre-filled.'),
-              backgroundColor: const Color(0xFF0D9488),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
+        _applyFoundVehicle(response, isFromTally: isFromTally);
       }
     } catch (error) {
       setState(() {
@@ -1176,6 +1218,275 @@ class _JobCardScreenState extends State<JobCardScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _searchByMobileNumber() async {
+    final rawMobile = _mobileSearchController.text.trim();
+    final digitsOnly = rawMobile.replaceAll(RegExp(r'\D'), '');
+
+    if (digitsOnly.length != 10) {
+      setState(() => _mobileSearchError = 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _searchError = null;
+      _mobileSearchError = null;
+      _vehicleNumberError = null;
+      _vehicleDetails = null;
+      _showCreateVehicleForm = false;
+    });
+
+    try {
+      final vehicles = await SupabaseService().searchVehiclesByMobileNumber(digitsOnly);
+
+      if (!mounted) return;
+
+      if (vehicles.isEmpty) {
+        // Check if owner master has this customer registered without a vehicle
+        final owner = await SupabaseService().searchOwnerByMobileNumber(digitsOnly);
+
+        setState(() {
+          _isFoundInTally = false;
+          _vehicleDetails = null;
+          _showCreateVehicleForm = true; // Vehicle not found, show create form
+          _currentVehicleId = null;
+          _lastKnownOdometer = null;
+          _vehicleNumberController.clear(); // Ready for new vehicle number input
+          _newOdometerController.clear();
+          _clientNameDiffers = false;
+          _clientPhoneDiffers = false;
+          _ownerDetails = owner;
+
+          // Pre-populate mobile and owner info
+          _newClientPhoneController.text = digitsOnly;
+          _newClientMobileController.text = digitsOnly;
+          if (owner != null) {
+            _selectedOwnerId = owner['id']?.toString();
+            _newClientNameController.text = (owner['Owner name'] ?? '').toString();
+            _ownerGstController.text = (owner['GST Number'] ?? '').toString();
+          } else {
+            _selectedOwnerId = null;
+            _newClientNameController.clear();
+            _ownerGstController.clear();
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              owner != null
+                  ? 'Customer found (${owner['Owner name']}) with no vehicle. Please enter vehicle details below.'
+                  : 'No vehicle found for mobile $digitsOnly. Please register new vehicle below.',
+            ),
+            backgroundColor: Colors.orange.shade800,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else if (vehicles.length == 1) {
+        _applyFoundVehicle(vehicles.first);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Vehicle found for $digitsOnly!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Multiple vehicles found for this mobile number
+        _showVehicleSelectionModal(vehicles, digitsOnly);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _vehicleDetails = null;
+          _showCreateVehicleForm = true;
+          _searchError = 'Error searching vehicle by mobile: $e';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showVehicleSelectionModal(List<Map<String, dynamic>> vehicles, String mobileNumber) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.directions_car, color: AppTheme.primaryColor, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${vehicles.length} Vehicles Found',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Linked to mobile $mobileNumber',
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select vehicle to create job card:',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 10),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: vehicles.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final v = vehicles[index];
+                    final vehNum = (v['Vehicle Number'] ?? 'Unknown').toString();
+                    final brand = v['vehicle_models']?['brand'] ?? '';
+                    final model = v['vehicle_models']?['Model name'] ?? '';
+                    final odo = v['latest_odometer'] ?? v['odometer'];
+                    final owner = v['owner_details']?['Owner name'] ?? v['Owner name'] ?? '';
+
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _applyFoundVehicle(v);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E293B),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                vehNum,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    brand.isNotEmpty || model.isNotEmpty
+                                        ? '$brand $model'.trim()
+                                        : 'Model not set',
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                  ),
+                                  if (owner.isNotEmpty)
+                                    Text(
+                                      owner,
+                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                    ),
+                                  if (odo != null)
+                                    Text(
+                                      'Last Odo: $odo km',
+                                      style: const TextStyle(color: Color(0xFF4F46E5), fontSize: 11, fontWeight: FontWeight.w500),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    final firstOwner = vehicles.first['owner_details'] ?? {};
+                    setState(() {
+                      _isFoundInTally = false;
+                      _vehicleDetails = null;
+                      _showCreateVehicleForm = true;
+                      _currentVehicleId = null;
+                      _lastKnownOdometer = null;
+                      _vehicleNumberController.clear();
+                      _newOdometerController.clear();
+                      _clientNameDiffers = false;
+                      _clientPhoneDiffers = false;
+                      _newClientPhoneController.text = mobileNumber;
+                      _newClientMobileController.text = mobileNumber;
+                      _newClientNameController.text = firstOwner['Owner name'] ?? vehicles.first['Owner name'] ?? '';
+                      _selectedOwnerId = firstOwner['id']?.toString() ?? vehicles.first['owner_id']?.toString();
+                      _ownerGstController.text = firstOwner['GST Number'] ?? '';
+                    });
+                  },
+                  icon: const Icon(Icons.add_circle_outline, size: 18),
+                  label: const Text('Register Another Vehicle for this Mobile'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _matchAndSelectVehicleModel(String detectedModel) {
@@ -1220,23 +1531,31 @@ class _JobCardScreenState extends State<JobCardScreen> {
     final adminSettings = Provider.of<AdminSettingsProvider>(context, listen: false);
     
     // ✅ Validate all required fields
+    final vehicleNum = VehicleNumberUtils.normalize(_vehicleNumberController.text.trim());
+    final vehicleNumError = Validators.validateVehicleNumber(vehicleNum);
     final phoneError =
-        Validators.validatePhoneNumber(_newClientPhoneController.text);
-    final odometerError =
-        Validators.validateOdometer(_newOdometerController.text);
+        Validators.validatePhoneNumber(_newClientPhoneController.text.trim());
+    final rawOdo = _newOdometerController.text.trim();
+    final odometerError = rawOdo.isEmpty
+        ? 'Odometer reading is required'
+        : Validators.validateOdometer(rawOdo);
 
-    if (_newClientNameController.text.isEmpty ||
+    if (vehicleNum.isEmpty ||
+        vehicleNumError != null ||
+        _newClientNameController.text.trim().isEmpty ||
         phoneError != null ||
+        rawOdo.isEmpty ||
         odometerError != null ||
         _selectedBrand == null ||
         _selectedModelId == null) {
       setState(() {
+        _vehicleNumberError = vehicleNumError ?? (vehicleNum.isEmpty ? 'Vehicle number required' : null);
         _phoneError = phoneError;
         _odometerError = odometerError;
       });
 
       _isSaving = false;
-      _showErrorSnackBar(AppConstants.errorInvalidInput); // ✅ Use constant
+      _showErrorSnackBar(rawOdo.isEmpty ? 'Odometer reading is required.' : AppConstants.errorInvalidInput); // ✅ Use constant
       return;
     }
 
@@ -1690,6 +2009,21 @@ class _JobCardScreenState extends State<JobCardScreen> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       if (_complaints.isEmpty) {
         _showErrorSnackBar('Please add at least one complaint.');
+        _isSaving = false;
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final odoReading = _newOdometerController.text.trim().isNotEmpty
+          ? _newOdometerController.text.trim()
+          : _odometerController.text.trim();
+      if (odoReading.isEmpty) {
+        _showErrorSnackBar('Odometer reading is required.');
+        setState(() {
+          _odometerError = 'Odometer reading is required';
+          _isLoading = false;
+        });
+        _isSaving = false;
         return;
       }
 
@@ -1822,9 +2156,9 @@ class _JobCardScreenState extends State<JobCardScreen> {
       return;
     }
 
-    if (!isDraft && widget.draftJob?['status'] != AppConstants.statusEditRequested) {
+    if (!kIsWeb && !isDraft && widget.draftJob?['status'] != AppConstants.statusEditRequested) {
       // ✅ Modify Odometer validation and saving logic (2e)
-      // Validate required wheel photos
+      // Validate required wheel photos (mandatory on mobile app, optional on web for testing)
       if (_wheelPhotos.length < 5) {
         if (mounted) {
           Navigator.of(context).pop();
@@ -1860,8 +2194,23 @@ class _JobCardScreenState extends State<JobCardScreen> {
       }
     }
 
-    final odometerFormatError = Validators.validateOdometer(
-        _odometerController.text); // Only checks format
+    final odoText = _newOdometerController.text.trim().isNotEmpty
+        ? _newOdometerController.text.trim()
+        : _odometerController.text.trim();
+    if (odoText.isEmpty) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        setState(() {
+          _isLoading = false;
+          _isSaving = false;
+          _odometerError = 'Odometer reading is required';
+        });
+      }
+      _showErrorSnackBar('Odometer reading is required.');
+      return;
+    }
+
+    final odometerFormatError = Validators.validateOdometer(odoText);
     if (odometerFormatError != null) {
       if (mounted) {
         Navigator.of(context).pop();
@@ -1872,7 +2221,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
     }
 
     final newOdometer =
-        int.tryParse(_odometerController.text) ?? _lastKnownOdometer ?? 0;
+        int.tryParse(odoText) ?? _lastKnownOdometer ?? 0;
 
     // REMOVE the blocking check:
     // if (newOdometer < (_lastKnownOdometer ?? 0)) {
@@ -2389,8 +2738,8 @@ class _JobCardScreenState extends State<JobCardScreen> {
     final size = _tyreSizeController.text.trim();
     final liSi = _tyreLiSiController.text.trim();
 
-    if (brand.isEmpty) {
-      _showErrorSnackBar('Please enter or select Tyre Brand.');
+    if (brand.isEmpty && size.isEmpty) {
+      _showErrorSnackBar('Please browse and select a Tyre from catalog.');
       return;
     }
     final modelStr = model.isNotEmpty ? ' $model' : '';
@@ -3132,7 +3481,9 @@ class _JobCardScreenState extends State<JobCardScreen> {
         title: Column(
           children: [
             Text(
-              widget.draftJob?['status'] == AppConstants.statusEditRequested ? 'Edit Services & Tyres' : 'Job Card',
+              _isCourierMode
+                  ? (widget.draftJob != null ? 'Edit Courier Job Card' : 'Courier Job Card')
+                  : (widget.draftJob?['status'] == AppConstants.statusEditRequested ? 'Edit Services & Tyres' : 'Job Card'),
               style: const TextStyle(
                 color: Color(0xFF1E293B),
                 fontWeight: FontWeight.bold,
@@ -3187,7 +3538,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (widget.draftJob?['status'] != AppConstants.statusEditRequested) ...[
+              if (widget.draftJob == null) ...[
                 _buildModeToggle(),
                 const SizedBox(height: 16),
               ],
@@ -3229,40 +3580,185 @@ class _JobCardScreenState extends State<JobCardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const FormLabel(text: 'Vehicle No:'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _vehicleNumberController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: InputDecoration(
-                    hintText: 'enter vehicle number or scan',
-                    errorText: _vehicleNumberError, // ✅ Show validation error
-                    suffixIcon: _buildCameraIcon(),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+          // Search mode toggle (Vehicle Number vs Mobile Number)
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      if (_searchByMobile) {
+                        setState(() {
+                          _searchByMobile = false;
+                          _searchError = null;
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: !_searchByMobile ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: !_searchByMobile
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.directions_car_outlined,
+                            size: 16,
+                            color: !_searchByMobile ? AppTheme.primaryColor : Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Vehicle No.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: !_searchByMobile ? FontWeight.w700 : FontWeight.w500,
+                              color: !_searchByMobile ? AppTheme.primaryColor : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  onChanged: (value) {
-                    // ✅ Validate on change
-                    setState(() {
-                      _vehicleNumberController.value = TextEditingValue(
-                        text: value.toUpperCase(),
-                        selection: _vehicleNumberController.selection,
-                      );
-                      _vehicleNumberError =
-                          Validators.validateVehicleNumber(value);
-                    });
-                  },
                 ),
-              ),
-              const SizedBox(width: 8),
-              _buildMinimalSearchButton(),
-            ],
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      if (!_searchByMobile) {
+                        setState(() {
+                          _searchByMobile = true;
+                          _searchError = null;
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _searchByMobile ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: _searchByMobile
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.phone_android_outlined,
+                            size: 16,
+                            color: _searchByMobile ? AppTheme.primaryColor : Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Mobile No.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: _searchByMobile ? FontWeight.w700 : FontWeight.w500,
+                              color: _searchByMobile ? AppTheme.primaryColor : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 14),
+
+          if (!_searchByMobile) ...[
+            const FormLabel(text: 'Vehicle No:'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _vehicleNumberController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Enter vehicle number or scan',
+                      errorText: _vehicleNumberError, // ✅ Show validation error
+                      suffixIcon: _buildCameraIcon(),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onSubmitted: (_) => _searchVehicle(),
+                    onChanged: (value) {
+                      // ✅ Validate on change
+                      setState(() {
+                        _vehicleNumberController.value = TextEditingValue(
+                          text: value.toUpperCase(),
+                          selection: _vehicleNumberController.selection,
+                        );
+                        _vehicleNumberError =
+                            Validators.validateVehicleNumber(value);
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildMinimalSearchButton(onTap: _searchVehicle, tooltip: 'Search Vehicle'),
+              ],
+            ),
+          ] else ...[
+            const FormLabel(text: 'Customer Mobile No:'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _mobileSearchController,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: 'Enter 10-digit mobile number',
+                      prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                      errorText: _mobileSearchError,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onSubmitted: (_) => _searchByMobileNumber(),
+                    onChanged: (value) {
+                      if (_mobileSearchError != null) {
+                        setState(() => _mobileSearchError = null);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildMinimalSearchButton(onTap: _searchByMobileNumber, tooltip: 'Search Mobile'),
+              ],
+            ),
+          ],
           if (_searchError != null && !_showCreateVehicleForm)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
@@ -3299,11 +3795,11 @@ class _JobCardScreenState extends State<JobCardScreen> {
   }
 
   // ✅ NEW: Minimal search button
-  Widget _buildMinimalSearchButton() {
+  Widget _buildMinimalSearchButton({VoidCallback? onTap, String tooltip = 'Search Vehicle'}) {
     return Tooltip(
-      message: 'Search Vehicle',
+      message: tooltip,
       child: InkWell(
-        onTap: _isLoading ? null : _searchVehicle,
+        onTap: _isLoading ? null : (onTap ?? _searchVehicle),
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 44,
@@ -3481,7 +3977,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
           ),
           const SizedBox(height: 16),
 
-          const FormLabel(text: 'Odometer Reading'),
+          const FormLabel(text: 'Odometer Reading', isRequired: true),
           TextField(
             controller: _odometerController, // Already populated with latest
             decoration: InputDecoration(
@@ -3501,7 +3997,11 @@ class _JobCardScreenState extends State<JobCardScreen> {
             onChanged: (value) {
               // Validate on change
               setState(() {
-                _odometerError = Validators.validateOdometer(value);
+                if (value.trim().isEmpty) {
+                  _odometerError = 'Odometer reading is required';
+                } else {
+                  _odometerError = Validators.validateOdometer(value.trim());
+                }
               });
             },
           ),
@@ -3659,12 +4159,23 @@ class _JobCardScreenState extends State<JobCardScreen> {
             ),
           ),
           const Divider(height: 24),
-          const FormLabel(text: 'Vehicle Number'),
+          const FormLabel(text: 'Vehicle Number', isRequired: true),
           TextField(
-            controller:
-                TextEditingController(text: _vehicleNumberController.text),
-            readOnly: true,
-            style: const TextStyle(color: AppTheme.textSecondary),
+            controller: _vehicleNumberController,
+            textCapitalization: TextCapitalization.characters,
+            decoration: InputDecoration(
+              hintText: 'e.g. MH12AB1234',
+              errorText: _vehicleNumberError,
+            ),
+            onChanged: (value) {
+              setState(() {
+                _vehicleNumberController.value = TextEditingValue(
+                  text: value.toUpperCase(),
+                  selection: _vehicleNumberController.selection,
+                );
+                _vehicleNumberError = Validators.validateVehicleNumber(value);
+              });
+            },
           ),
           const SizedBox(height: 16),
           Consumer<AdminSettingsProvider>(
@@ -3692,7 +4203,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
             },
           ),
           const SizedBox(height: 16),
-          const FormLabel(text: 'Odometer Reading (km)'),
+          const FormLabel(text: 'Odometer Reading (km)', isRequired: true),
           TextField(
             controller: _newOdometerController,
             decoration: InputDecoration(
@@ -3703,7 +4214,11 @@ class _JobCardScreenState extends State<JobCardScreen> {
             onChanged: (value) {
               // ✅ Validate on change
               setState(() {
-                _odometerError = Validators.validateOdometer(value);
+                if (value.trim().isEmpty) {
+                  _odometerError = 'Odometer reading is required';
+                } else {
+                  _odometerError = Validators.validateOdometer(value.trim());
+                }
               });
             },
           ),
@@ -3916,7 +4431,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
                   readOnly: true,
                   onTap: _showServiceCatalogModal,
                   decoration: const InputDecoration(
-                    hintText: 'Select or add service...',
+                    hintText: 'Select service from catalog...',
                     hintStyle: TextStyle(fontSize: 13),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     suffixIcon: Icon(Icons.list_alt, color: AppTheme.primaryColor),
@@ -3926,7 +4441,13 @@ class _JobCardScreenState extends State<JobCardScreen> {
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed: _addComplaint,
+                onPressed: () {
+                  if (_complaintInputController.text.trim().isEmpty) {
+                    _showServiceCatalogModal();
+                  } else {
+                    _addComplaint();
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(16),
@@ -3961,147 +4482,130 @@ class _JobCardScreenState extends State<JobCardScreen> {
                 ),
                 const SizedBox(width: 4),
               ],
-              ElevatedButton.icon(
-                onPressed: () => _openTyreCatalogPicker(),
-                icon: const Icon(Icons.search, size: 14),
-                label: const Text('Browse', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.12),
-                  foregroundColor: AppTheme.primaryColor,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: const BorderSide(color: AppTheme.primaryColor, width: 1),
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TypeaheadField(
-                  controller: _tyreBrandController,
-                  label: 'Brand',
-                  hintText: 'e.g. Ceat, Apollo',
-                  allowCreate: false,
-                  onSearch: (query) async {
-                    final brands = _tyreCatalog
-                        .map((row) => TyreCatalogHelper.extractBrand(row))
-                        .where((b) => b.isNotEmpty && b != 'Other')
-                        .toSet().toList()
-                      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-                    return _filterCatalogValues(brands, query);
-                  },
-                  onSelected: (option) {
-                    setState(() {
-                      _tyreBrandController.text = option.label;
-                      _matchAndAutofillTyreDetails();
-                    });
-                  },
+          // Browse & Selected Tyre Display Card (Database Selection Only)
+          InkWell(
+            onTap: () => _openTyreCatalogPicker(),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: (_tyreModelController.text.isNotEmpty || _tyreBrandController.text.isNotEmpty)
+                      ? AppTheme.primaryColor
+                      : const Color(0xFFCBD5E1),
+                  width: (_tyreModelController.text.isNotEmpty || _tyreBrandController.text.isNotEmpty) ? 1.5 : 1,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TypeaheadField(
-                  controller: _tyreModelController,
-                  label: 'Model / Pattern',
-                  hintText: 'e.g. Zoom Rad X3',
-                  allowCreate: false,
-                  onSearch: (query) async {
-                    final brand = _tyreBrandController.text.trim().toLowerCase();
-                    final models = _tyreCatalog
-                        .where((row) => brand.isEmpty || TyreCatalogHelper.extractBrand(row).toLowerCase() == brand)
-                        .map((row) => TyreCatalogHelper.extractModel(row))
-                        .where((m) => m.isNotEmpty)
-                        .toSet().toList()
-                      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-                    return _filterCatalogValues(models, query);
-                  },
-                  onSelected: (option) {
-                    setState(() {
-                      _tyreModelController.text = option.label;
-                      _matchAndAutofillTyreDetails();
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TypeaheadField(
-                  controller: _tyreSizeController,
-                  label: 'Size',
-                  hintText: 'e.g. 140/60R17',
-                  allowCreate: false,
-                  onSearch: (query) async {
-                    final brand = _tyreBrandController.text.trim().toLowerCase();
-                    final model = _tyreModelController.text.trim().toLowerCase();
-                    final sizes = _tyreCatalog
-                        .where((row) {
-                          final rBrand = TyreCatalogHelper.extractBrand(row).toLowerCase();
-                          final rModel = TyreCatalogHelper.extractModel(row).toLowerCase();
-                          final matchBrand = brand.isEmpty || rBrand == brand;
-                          final matchModel = model.isEmpty || rModel == model;
-                          return matchBrand && matchModel;
-                        })
-                        .map((row) => TyreCatalogHelper.extractSize(row))
-                        .where((s) => s.isNotEmpty)
-                        .toSet().toList()
-                      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-                    return _filterCatalogValues(sizes, query);
-                  },
-                  onSelected: (option) {
-                    setState(() {
-                      _tyreSizeController.text = option.label;
-                      _matchAndAutofillTyreDetails();
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TypeaheadField(
-                  controller: _tyreLiSiController,
-                  label: 'LI / SI',
-                  hintText: 'e.g. 63P, 91V',
-                  allowCreate: false,
-                  onSearch: (query) async {
-                    final currentBrand = _tyreBrandController.text.trim().toLowerCase();
-                    final currentModel = _tyreModelController.text.trim().toLowerCase();
-                    final currentSize = _tyreSizeController.text.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-                    final liSis = _tyreCatalog
-                        .where((t) {
-                          final rBrand = TyreCatalogHelper.extractBrand(t).toLowerCase();
-                          final rModel = TyreCatalogHelper.extractModel(t).toLowerCase();
-                          final rSize = TyreCatalogHelper.extractSize(t).toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-                          return (currentBrand.isEmpty || rBrand == currentBrand) &&
-                              (currentModel.isEmpty || rModel == currentModel) &&
-                              (currentSize.isEmpty || rSize == currentSize);
-                        })
-                        .map((t) => (t['li_si'] ?? '').toString().trim())
-                        .where((liSi) => liSi.isNotEmpty)
-                        .toSet().toList()
-                      ..sort();
-                    return _filterCatalogValues(liSis, query);
-                  },
-                  onSelected: (option) {
-                    setState(() {
-                      _tyreLiSiController.text = option.label;
-                      _matchAndAutofillTyreDetails();
-                    });
-                  },
-                ),
-              ),
-            ],
+              child: (_tyreModelController.text.isNotEmpty || _tyreBrandController.text.isNotEmpty)
+                  ? Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _tyreSizeController.text.isNotEmpty
+                                ? '${_tyreSizeController.text}${_tyreLiSiController.text.isNotEmpty ? ' ${_tyreLiSiController.text}' : ''}'
+                                : 'Tyre',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _tyreModelController.text.isNotEmpty
+                                    ? _tyreModelController.text
+                                    : _tyreBrandController.text,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (_tyreBrandController.text.isNotEmpty)
+                                Text(
+                                  _tyreBrandController.text,
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => _openTyreCatalogPicker(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.12),
+                            foregroundColor: AppTheme.primaryColor,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: const Text('Change', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.clear, size: 16, color: Colors.grey),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            setState(() {
+                              _tyreBrandController.clear();
+                              _tyreModelController.clear();
+                              _tyreSizeController.clear();
+                              _tyreLiSiController.clear();
+                              _tyrePriceController.clear();
+                              _tyreTotalController.clear();
+                              _tyreCountController.text = '1';
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        const Icon(Icons.search, color: AppTheme.primaryColor, size: 20),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Browse & Select Tyre from DB...',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => _openTyreCatalogPicker(),
+                          icon: const Icon(Icons.list_alt, size: 14),
+                          label: const Text('Browse', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            visualDensity: VisualDensity.compact,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -4542,9 +5046,9 @@ class _JobCardScreenState extends State<JobCardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: const FormLabel(text: 'Wheel Photos (5 required)'),
+                child: FormLabel(text: kIsWeb ? 'Wheel Photos (Optional on Web)' : 'Wheel Photos (5 required)'),
               ),
-              if (_wheelPhotos.length < 5)
+              if (!kIsWeb && _wheelPhotos.length < 5)
                 ElevatedButton.icon(
                   onPressed: _startRapidCapture,
                   icon: const Icon(Icons.camera_alt, size: 18),
@@ -4832,7 +5336,34 @@ class _JobCardScreenState extends State<JobCardScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('${product['brand'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: (product['category'] == 'Alloy' || (product['name'] ?? '').toString().startsWith('Alloy'))
+                                                ? const Color(0xFF0D9488).withValues(alpha: 0.15)
+                                                : AppTheme.primaryColor.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            (product['category'] == 'Alloy' || (product['name'] ?? '').toString().startsWith('Alloy'))
+                                                ? 'Alloy'
+                                                : 'Tyre',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: (product['category'] == 'Alloy' || (product['name'] ?? '').toString().startsWith('Alloy'))
+                                                  ? const Color(0xFF0D9488)
+                                                  : AppTheme.primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text('${product['brand'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
                                     Text('${product['model'] ?? ''}', style: const TextStyle(fontSize: 13, color: Colors.black87)),
                                     Text('${product['size'] ?? ''}', style: const TextStyle(fontSize: 13, color: Colors.black87)),
                                     const SizedBox(height: 6),
@@ -4840,28 +5371,39 @@ class _JobCardScreenState extends State<JobCardScreen> {
                                   ],
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text('Total: ₹${((product['price'] as double) * (product['qty'] as int)).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-                                  Row(
+                              Builder(
+                                builder: (context) {
+                                  final num price = (product['price'] is num)
+                                      ? product['price'] as num
+                                      : (double.tryParse(product['price']?.toString() ?? '0') ?? 0.0);
+                                  final int qty = (product['qty'] is int)
+                                      ? product['qty'] as int
+                                      : (int.tryParse(product['qty']?.toString() ?? '1') ?? 1);
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, color: Colors.blue),
-                                        onPressed: () => _editCourierProduct(index),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                        onPressed: () => _deleteCourierProduct(index),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
+                                      Text('Total: ₹${(price * qty).toStringAsFixed(2)}',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blue),
+                                            onPressed: () => _editCourierProduct(index),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                            onPressed: () => _deleteCourierProduct(index),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ),
-                                ],
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -4869,7 +5411,9 @@ class _JobCardScreenState extends State<JobCardScreen> {
                           Builder(
                             builder: (context) {
                                   final qrImages = product['qr_images'] as List<dynamic>? ?? [];
-                                  final qty = product['qty'] as int;
+                                  final int qty = (product['qty'] is int)
+                                      ? product['qty'] as int
+                                      : (int.tryParse(product['qty']?.toString() ?? '1') ?? 1);
                                   
                                   if (qrImages.isEmpty) {
                                     return ElevatedButton.icon(
@@ -4943,23 +5487,122 @@ class _JobCardScreenState extends State<JobCardScreen> {
                 ),
                 
               const SizedBox(height: 16),
+              // Category Toggle: Tyres vs Alloys
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (_courierCategory != 'Tyre') {
+                          setState(() {
+                            _courierCategory = 'Tyre';
+                            _courierProductBrand = null;
+                            _courierProductModel = null;
+                            _courierProductSize = null;
+                            _courierProductPriceController.clear();
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _courierCategory == 'Tyre' ? AppTheme.primaryColor : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _courierCategory == 'Tyre' ? AppTheme.primaryColor : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.tire_repair, size: 16, color: _courierCategory == 'Tyre' ? Colors.white : Colors.grey.shade700),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Tyres',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _courierCategory == 'Tyre' ? Colors.white : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (_courierCategory != 'Alloy') {
+                          setState(() {
+                            _courierCategory = 'Alloy';
+                            _courierProductBrand = null;
+                            _courierProductModel = null;
+                            _courierProductSize = null;
+                            _courierProductPriceController.clear();
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _courierCategory == 'Alloy' ? const Color(0xFF0D9488) : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _courierCategory == 'Alloy' ? const Color(0xFF0D9488) : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.album_outlined, size: 16, color: _courierCategory == 'Alloy' ? Colors.white : Colors.grey.shade700),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Alloys',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _courierCategory == 'Alloy' ? Colors.white : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Select Tyre / Product', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF334155))),
+                  Text(
+                    'Select ${_courierCategory == 'Alloy' ? 'Alloy Wheel' : 'Tyre'}',
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF334155)),
+                  ),
                   ElevatedButton.icon(
-                    onPressed: () => _openTyreCatalogPicker(forCourier: true),
+                    onPressed: () {
+                      if (_courierCategory == 'Alloy') {
+                        _openAlloyCatalogPicker(forCourier: true);
+                      } else {
+                        _openTyreCatalogPicker(forCourier: true);
+                      }
+                    },
                     icon: const Icon(Icons.search, size: 14),
-                    label: const Text('Browse Catalog', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    label: Text(
+                      'Browse ${_courierCategory == 'Alloy' ? 'Alloys' : 'Tyres'}',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.12),
-                      foregroundColor: AppTheme.primaryColor,
+                      backgroundColor: (_courierCategory == 'Alloy' ? const Color(0xFF0D9488) : AppTheme.primaryColor).withValues(alpha: 0.12),
+                      foregroundColor: _courierCategory == 'Alloy' ? const Color(0xFF0D9488) : AppTheme.primaryColor,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       visualDensity: VisualDensity.compact,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
-                        side: const BorderSide(color: AppTheme.primaryColor, width: 1),
+                        side: BorderSide(color: _courierCategory == 'Alloy' ? const Color(0xFF0D9488) : AppTheme.primaryColor, width: 1),
                       ),
                     ),
                   ),
@@ -4971,84 +5614,137 @@ class _JobCardScreenState extends State<JobCardScreen> {
                   Expanded(
                     child: InkWell(
                       onTap: () async {
-                        final brands = _tyreCatalog
-                            .map((t) => TyreCatalogHelper.extractBrand(t))
-                            .where((b) => b.isNotEmpty && b != 'Other')
-                            .toSet().toList()
-                          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                        List<String> brands = [];
+                        if (_courierCategory == 'Alloy') {
+                          if (_alloyCatalog.isEmpty) await _fetchAlloyCatalog();
+                          brands = _alloyCatalog
+                              .map((t) => AlloyCatalogHelper.extractBrand(t))
+                              .where((b) => b.isNotEmpty && b != 'Alloy Wheels')
+                              .toSet().toList()
+                            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                        } else {
+                          if (_tyreCatalog.isEmpty) await _fetchTyreCatalog();
+                          brands = _tyreCatalog
+                              .map((t) => TyreCatalogHelper.extractBrand(t))
+                              .where((b) => b.isNotEmpty && b != 'Other')
+                              .toSet().toList()
+                            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                        }
                         final selected = await _showSearchableDropdown('Select Brand', brands);
                         if (selected != null) {
                           setState(() {
-                            _courierTyreBrand = selected;
-                            _courierTyreModel = null;
-                            _courierTyreSize = null;
+                            _courierProductBrand = selected;
+                            _courierProductModel = null;
+                            _courierProductSize = null;
                             _courierProductPriceController.clear();
                           });
                         }
                       },
                       child: InputDecorator(
                         decoration: const InputDecoration(labelText: 'Brand', isDense: true, border: OutlineInputBorder()),
-                        child: Text(_courierTyreBrand ?? 'Select', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                        child: Text(_courierProductBrand ?? 'Select', style: const TextStyle(fontSize: 13, color: Colors.black87)),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: InkWell(
-                      onTap: _courierTyreBrand == null ? null : () async {
-                        final brand = _courierTyreBrand!.toLowerCase();
-                        final models = _tyreCatalog
-                            .where((t) => TyreCatalogHelper.extractBrand(t).toLowerCase() == brand)
-                            .map((t) => TyreCatalogHelper.extractModel(t))
-                            .where((m) => m.isNotEmpty)
-                            .toSet().toList()
-                          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                      onTap: _courierProductBrand == null ? null : () async {
+                        final brand = _courierProductBrand!.toLowerCase();
+                        List<String> models = [];
+                        if (_courierCategory == 'Alloy') {
+                          models = _alloyCatalog
+                              .where((t) => AlloyCatalogHelper.extractBrand(t).toLowerCase() == brand)
+                              .map((t) => AlloyCatalogHelper.extractModel(t))
+                              .where((m) => m.isNotEmpty)
+                              .toSet().toList()
+                            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                        } else {
+                          models = _tyreCatalog
+                              .where((t) => TyreCatalogHelper.extractBrand(t).toLowerCase() == brand)
+                              .map((t) => TyreCatalogHelper.extractModel(t))
+                              .where((m) => m.isNotEmpty)
+                              .toSet().toList()
+                            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                        }
                         final selected = await _showSearchableDropdown('Select Model', models);
                         if (selected != null) {
                           setState(() {
-                            _courierTyreModel = selected;
-                            _courierTyreSize = null;
+                            _courierProductModel = selected;
+                            _courierProductSize = null;
                             _courierProductPriceController.clear();
                           });
                         }
                       },
                       child: InputDecorator(
                         decoration: const InputDecoration(labelText: 'Model', isDense: true, border: OutlineInputBorder()),
-                        child: Text(_courierTyreModel ?? 'Select', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                        child: Text(_courierProductModel ?? 'Select', style: const TextStyle(fontSize: 13, color: Colors.black87)),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: InkWell(
-                      onTap: _courierTyreModel == null ? null : () async {
-                        final brand = (_courierTyreBrand ?? '').toLowerCase();
-                        final model = (_courierTyreModel ?? '').toLowerCase();
-                        final sizes = _tyreCatalog
-                            .where((t) =>
-                                TyreCatalogHelper.extractBrand(t).toLowerCase() == brand &&
-                                TyreCatalogHelper.extractModel(t).toLowerCase() == model)
-                            .map((t) => TyreCatalogHelper.extractSize(t))
-                            .where((s) => s.isNotEmpty)
-                            .toSet().toList()
-                          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                      onTap: _courierProductModel == null ? null : () async {
+                        final brand = (_courierProductBrand ?? '').toLowerCase();
+                        final model = (_courierProductModel ?? '').toLowerCase();
+                        List<String> sizes = [];
+                        if (_courierCategory == 'Alloy') {
+                          sizes = _alloyCatalog
+                              .where((t) =>
+                                  AlloyCatalogHelper.extractBrand(t).toLowerCase() == brand &&
+                                  AlloyCatalogHelper.extractModel(t).toLowerCase() == model)
+                              .map((t) => AlloyCatalogHelper.extractSize(t))
+                              .where((s) => s.isNotEmpty)
+                              .toSet().toList()
+                            ..sort((a, b) {
+                              final numA = int.tryParse(a.replaceAll(RegExp(r'\D'), '')) ?? 0;
+                              final numB = int.tryParse(b.replaceAll(RegExp(r'\D'), '')) ?? 0;
+                              return numA.compareTo(numB);
+                            });
+                        } else {
+                          sizes = _tyreCatalog
+                              .where((t) =>
+                                  TyreCatalogHelper.extractBrand(t).toLowerCase() == brand &&
+                                  TyreCatalogHelper.extractModel(t).toLowerCase() == model)
+                              .map((t) => TyreCatalogHelper.extractSize(t))
+                              .where((s) => s.isNotEmpty)
+                              .toSet().toList()
+                            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                        }
                         final selected = await _showSearchableDropdown('Select Size', sizes);
                         if (selected != null) {
                           setState(() {
-                            _courierTyreSize = selected;
+                            _courierProductSize = selected;
                             final normSelectedSize = selected.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
-                            final matchingTyre = _tyreCatalog.firstWhere(
-                              (t) =>
-                                  TyreCatalogHelper.extractBrand(t).toLowerCase() == brand &&
-                                  TyreCatalogHelper.extractModel(t).toLowerCase() == model &&
-                                  TyreCatalogHelper.extractSize(t).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() == normSelectedSize,
-                              orElse: () => {},
-                            );
-                            if (matchingTyre.isNotEmpty) {
-                              final price = matchingTyre['billing_price'] ?? matchingTyre['basic_price'];
-                              if (price != null) {
-                                final numPrice = double.tryParse(price.toString());
-                                _courierProductPriceController.text = numPrice != null ? numPrice.toStringAsFixed(2) : price.toString();
+                            if (_courierCategory == 'Alloy') {
+                              final matchingAlloy = _alloyCatalog.firstWhere(
+                                (t) =>
+                                    AlloyCatalogHelper.extractBrand(t).toLowerCase() == brand &&
+                                    AlloyCatalogHelper.extractModel(t).toLowerCase() == model &&
+                                    AlloyCatalogHelper.extractSize(t).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() == normSelectedSize,
+                                orElse: () => {},
+                              );
+                              if (matchingAlloy.isNotEmpty) {
+                                final price = AlloyCatalogHelper.extractPrice(matchingAlloy);
+                                if (price != null) {
+                                  _courierProductPriceController.text = price.toStringAsFixed(2);
+                                }
+                              }
+                            } else {
+                              final matchingTyre = _tyreCatalog.firstWhere(
+                                (t) =>
+                                    TyreCatalogHelper.extractBrand(t).toLowerCase() == brand &&
+                                    TyreCatalogHelper.extractModel(t).toLowerCase() == model &&
+                                    TyreCatalogHelper.extractSize(t).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() == normSelectedSize,
+                                orElse: () => {},
+                              );
+                              if (matchingTyre.isNotEmpty) {
+                                final price = matchingTyre['billing_price'] ?? matchingTyre['basic_price'];
+                                if (price != null) {
+                                  final numPrice = double.tryParse(price.toString());
+                                  _courierProductPriceController.text = numPrice != null ? numPrice.toStringAsFixed(2) : price.toString();
+                                }
                               }
                             }
                           });
@@ -5056,7 +5752,7 @@ class _JobCardScreenState extends State<JobCardScreen> {
                       },
                       child: InputDecorator(
                         decoration: const InputDecoration(labelText: 'Size', isDense: true, border: OutlineInputBorder()),
-                        child: Text(_courierTyreSize ?? 'Select', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                        child: Text(_courierProductSize ?? 'Select', style: const TextStyle(fontSize: 13, color: Colors.black87)),
                       ),
                     ),
                   ),
@@ -5185,18 +5881,20 @@ class _JobCardScreenState extends State<JobCardScreen> {
           ),
           child: _isLoading 
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Text('Create Courier Job Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              : Text(widget.draftJob != null ? 'Save Updates' : 'Create Courier Job Card', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: _isLoading ? null : () => _submitCourierReport(status: AppConstants.statusDraft),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.primaryColor,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        if (widget.draftJob == null || widget.draftJob?['status'] == AppConstants.statusDraft) ...[
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: _isLoading ? null : () => _submitCourierReport(status: AppConstants.statusDraft),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primaryColor,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Save as Draft', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
-          child: const Text('Save as Draft', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ),
+        ],
       ],
     );
   }
@@ -5286,7 +5984,10 @@ class _JobCardScreenState extends State<JobCardScreen> {
 
     try {
       final List<Map<String, dynamic>> finalProducts = _courierProductsList.map((p) {
+        final category = (p['category'] ?? (p['is_alloy'] == true ? 'Alloy' : 'Tyre')).toString();
         return {
+          'category': category,
+          'is_alloy': category == 'Alloy',
           'brand': p['brand'],
           'model': p['model'],
           'size': p['size'],
@@ -5315,30 +6016,39 @@ class _JobCardScreenState extends State<JobCardScreen> {
         }
       }
       
-      final Map<String, dynamic> insertData = {
-        'vehicle_id': null, // Explicitly null for couriers
-        'executive_id': executiveId,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-        'complaint': jsonEncode(['Courier Dispatch']),
-        'status': status, 
-        'started_at': status == AppConstants.statusDraft ? null : DateTime.now().toUtc().toIso8601String(),
-        'completed_at': status == AppConstants.statusCompleted ? DateTime.now().toUtc().toIso8601String() : null,
-        'marks': jsonEncode(marksJson),
-        'labour_cost': 0, // Removed labour_cost calculation for Couriers
-        'Owner name': _courierNameController.text.trim(),
-        'client_phone': _courierPhoneController.text.trim(),
-        'company_id': CompanyService().companyId,
-        'branch_id': CompanyService().branchId,
-        'branch_name': CompanyService().branchName,
-        'Guid': CompanyService().guid,
-        'company_name': CompanyService().companyName,
-      };
-
       int jobId;
       if (widget.draftJob != null) {
         jobId = widget.draftJob!['id'];
-        await supabase.from('reports').update(insertData).eq('id', jobId);
+        final Map<String, dynamic> updateData = {
+          'marks': jsonEncode(marksJson),
+          'Owner name': _courierNameController.text.trim(),
+          'client_phone': _courierPhoneController.text.trim(),
+          if (status == AppConstants.statusCompleted && widget.draftJob!['status'] == AppConstants.statusDraft) ...{
+            'status': AppConstants.statusCompleted,
+            'completed_at': DateTime.now().toUtc().toIso8601String(),
+            'started_at': widget.draftJob!['started_at'] ?? DateTime.now().toUtc().toIso8601String(),
+          },
+        };
+        await supabase.from('reports').update(updateData).eq('id', jobId);
       } else {
+        final Map<String, dynamic> insertData = {
+          'vehicle_id': null, // Explicitly null for couriers
+          'executive_id': executiveId,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'complaint': jsonEncode(['Courier Dispatch']),
+          'status': status, 
+          'started_at': status == AppConstants.statusDraft ? null : DateTime.now().toUtc().toIso8601String(),
+          'completed_at': status == AppConstants.statusCompleted ? DateTime.now().toUtc().toIso8601String() : null,
+          'marks': jsonEncode(marksJson),
+          'labour_cost': 0, // Removed labour_cost calculation for Couriers
+          'Owner name': _courierNameController.text.trim(),
+          'client_phone': _courierPhoneController.text.trim(),
+          'company_id': CompanyService().companyId,
+          'branch_id': CompanyService().branchId,
+          'branch_name': CompanyService().branchName,
+          'Guid': CompanyService().guid,
+          'company_name': CompanyService().companyName,
+        };
         final inserted = await vehicleService.createReport(context, insertData);
         jobId = inserted['id'] as int;
       }

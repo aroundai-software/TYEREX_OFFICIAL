@@ -180,7 +180,7 @@ class _CompanySwitcherBadgeState extends State<CompanySwitcherBadge> {
       onTap: hasMultiple ? _openCompanyPicker : null,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
@@ -205,9 +205,9 @@ class _CompanySwitcherBadgeState extends State<CompanySwitcherBadge> {
                 ),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 80),
+              constraints: const BoxConstraints(maxWidth: 75),
               child: Text(
                 companyName,
                 maxLines: 1,

@@ -443,6 +443,84 @@ def list_saved_ledgers(master: dict[str, Any] | None = None) -> list[dict[str, A
     return _select_all(LEDGER_TABLE, "*", extra=extra)
 
 
+def list_saved_sales_accounts(master: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    extra: dict[str, str] = {}
+    if master and master.get("id"):
+        extra["tally_company_id"] = f"eq.{master['id']}"
+    return _select_all(SALES_TABLE, "*", extra=extra)
+
+
+def upsert_service_catalog_from_sales(
+    sales_rows: list[dict[str, Any]], master: dict[str, Any] | None
+) -> int:
+    """Project Tally Sales/Service ledgers into public.service_catalog matching client live DB."""
+    if not sales_rows:
+        return 0
+    company_guid = str((master or {}).get("tally_guid") or "").strip()
+    company_name = str((master or {}).get("tally_company_name") or "").strip()
+    existing = _select_all("service_catalog", "id,name,Guid,category,company_name")
+    by_name = {
+        str(row.get("name") or "").strip().casefold(): row
+        for row in existing
+        if row.get("name")
+    }
+
+    headers = {
+        "apikey": supabase_key(),
+        "Authorization": f"Bearer {supabase_key()}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+
+    to_insert: list[dict[str, Any]] = []
+    updated = 0
+
+    for row in sales_rows:
+        name = str(row.get("name") or "").strip()
+        if not name:
+            continue
+        # Only import actual ledgers under Service Income
+        if str(row.get("account_type") or "").strip().lower() == "group":
+            continue
+        if str(row.get("parent_group") or "").strip().lower() != "service income":
+            continue
+
+        category = str(row.get("parent_group") or "Service Income").strip() or "Service Income"
+        key = name.casefold()
+        match = by_name.get(key)
+
+        if match and match.get("id"):
+            patch_body: dict[str, Any] = {}
+            if category and str(match.get("category") or "").strip() != category:
+                patch_body["category"] = category
+            if company_guid and not match.get("Guid"):
+                patch_body["Guid"] = company_guid
+            if patch_body:
+                resp = requests.patch(
+                    _rest("service_catalog"),
+                    headers=headers,
+                    params={"id": f"eq.{match['id']}"},
+                    json=patch_body,
+                    timeout=30,
+                )
+                if resp.ok:
+                    updated += 1
+            continue
+
+        record = {
+            "name": name,
+            "category": category,
+            "Guid": company_guid or None,
+            "default_price": None,
+            "company_name": None,
+        }
+        to_insert.append(record)
+        by_name[key] = record
+
+    saved = updated + _bulk_insert("service_catalog", to_insert)
+    return saved
+
+
 def _missing_column(error_text: str, keys: list[str]) -> str | None:
     text = error_text or ""
     if "schema cache" not in text and "Could not find" not in text:

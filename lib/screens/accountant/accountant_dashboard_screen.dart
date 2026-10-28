@@ -12,6 +12,7 @@ import '../../providers/user_provider.dart';
 import '../../services/company_service.dart';
 import '../login_screen.dart';
 import 'invoice_detail_screen.dart';
+import 'payment_screen.dart';
 import '../../widgets/company_switcher_badge.dart';
 
 class AccountantDashboardScreen extends StatefulWidget {
@@ -62,7 +63,14 @@ class _AccountantDashboardScreenState extends State<AccountantDashboardScreen>
     if (isConv == true || isConv == 'true' || isConv == 1 || isConv == '1') return true;
     final bStatus = (job['billing_status'] ?? '').toString().toLowerCase();
     if (bStatus == 'billed' || bStatus == 'paid' || bStatus == 'completed') return true;
+    if (job['payment_method'] != null && job['payment_method'].toString().trim().isNotEmpty) return true;
+    if (job['paid_at'] != null && job['paid_at'].toString().isNotEmpty) return true;
     return job['billed_at'] != null && job['billed_at'].toString().isNotEmpty;
+  }
+
+  bool _isConvertedInTally(Map<String, dynamic> job) {
+    final isConv = job['is_converted'];
+    return isConv == true || isConv == 'true' || isConv == 1 || isConv == '1';
   }
 
   List<Map<String, dynamic>> _filterJobs(List<Map<String, dynamic>> jobs) {
@@ -185,10 +193,10 @@ class _AccountantDashboardScreenState extends State<AccountantDashboardScreen>
           .select('''
             id, job_card_id, status, billing_status, is_converted, odometer_reading,
             complaint, suggested, labour_cost, created_at, completed_at, marks,
-            billed_at, paid_at, payment_method,
+            billed_at, paid_at, payment_method, payment_notes,
             gst_percent, discount_amount, discount_type, extra_charge_amount, extra_charge_label,
             "Owner name", client_phone, branch_id, branch_name, company_name, "Guid",
-            vehicles!reports_vehicle_fk("Vehicle Number", odometer, vehicle_models(brand, "Model name")),
+            vehicles!reports_vehicle_fk("Vehicle Number", odometer, "Owner name", "MobileNumber", vehicle_models(brand, "Model name")),
             bookings(customer_name, customer_phone),
             executive:executive_id(username),
             payments(id, method, amount, transaction_id, voucher_type, alter_id, notes, tally_sync_status, paid_at)
@@ -401,9 +409,8 @@ class _AccountantDashboardScreenState extends State<AccountantDashboardScreen>
           bool initialLoadDone = false;
           
           return StatefulBuilder(
-            builder: (context, setStateLocal) {
+            builder: (dialogContext, setStateLocal) {
               void fetchCancelled() async {
-                if (!mounted) return;
                 setStateLocal(() => isLoading = true);
                 try {
                   final companyName = CompanyService().companyName;
@@ -425,16 +432,16 @@ class _AccountantDashboardScreenState extends State<AccountantDashboardScreen>
                     q = q.eq('company_name', companyName);
                   }
                   final res = await q.order('id', ascending: false);
-                  if (mounted) {
+                  if (dialogContext.mounted) {
                     setStateLocal(() {
                       cancelledJobs = List<Map<String, dynamic>>.from(res);
                       isLoading = false;
                     });
                   }
                 } catch (e) {
-                  if (mounted) {
+                  if (dialogContext.mounted) {
                     setStateLocal(() => isLoading = false);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 }
               }
@@ -1020,8 +1027,10 @@ class _AccountantDashboardScreenState extends State<AccountantDashboardScreen>
                       ),
                       const SizedBox(height: 6),
                       // Status pill
-                      if (isBilled)
-                        _pill('Billed', const Color(0xFF059669), Icons.receipt_long)
+                      if (_isConvertedInTally(job))
+                        _pill('Converted in Tally', const Color(0xFF059669), Icons.check_circle_rounded)
+                      else if (isBilled)
+                        _pill('Marked as Billed from App', const Color(0xFF2563EB), Icons.app_registration_rounded)
                       else
                         _pill('Pending Billing', Colors.orange.shade800, Icons.pending_actions),
                     ],
@@ -1056,11 +1065,164 @@ class _AccountantDashboardScreenState extends State<AccountantDashboardScreen>
                   Text(job['executive']?['username'] ?? 'Staff', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
                 ],
               ),
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+
+              // ── Payment Book Reference & Quick Actions ──
+              if (isBilled) ...[
+                // Payment Mode Badge & Book Reference Notes
+                Builder(
+                  builder: (_) {
+                    final rawPayments = job['payments'];
+                    final pMethod = job['payment_method']?.toString() ?? 'Billed';
+                    String displayMethod = pMethod;
+                    if (rawPayments is List && rawPayments.length > 1) {
+                      displayMethod = 'Split: ${rawPayments.map((p) => '${p['method']} ₹${NumberFormat.currency(symbol: '', decimalDigits: 0).format(p['amount'] ?? 0)}').join(' + ')}';
+                    }
+                    final color = _colorForMethod(pMethod);
+                    final icon = _iconForMethod(pMethod);
+                    final pNotes = job['payment_notes']?.toString();
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: color.withValues(alpha: 0.25)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(icon, size: 15, color: color),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Paid via $displayMethod',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (pNotes != null && pNotes.trim().isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.bookmark_border_rounded, size: 13, color: AppTheme.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        'Ref: ${pNotes.trim()}',
+                                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final updated = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PaymentScreen(job: job, grandTotal: total),
+                                ),
+                              );
+                              if (updated == true) _loadData();
+                            },
+                            icon: const Icon(Icons.edit_note, size: 16, color: Color(0xFF059669)),
+                            label: const Text(
+                              'Edit Payment Details',
+                              style: TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF059669)),
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ] else ...[
+                // Pending: Simple button to Mark as Billed
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final updated = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentScreen(job: job, grandTotal: total),
+                        ),
+                      );
+                      if (updated == true) _loadData();
+                    },
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text(
+                      'Mark as Billed',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  IconData _iconForMethod(String method) {
+    final m = method.toLowerCase();
+    if (m.contains('gpay') || m.contains('google')) return Icons.account_balance_wallet_rounded;
+    if (m.contains('phonepe') || m.contains('phone pe')) return Icons.phone_android_rounded;
+    if (m.contains('paytm')) return Icons.account_balance_wallet_outlined;
+    if (m.contains('cash')) return Icons.payments_rounded;
+    if (m.contains('card')) return Icons.credit_card_rounded;
+    if (m.contains('split')) return Icons.call_split_rounded;
+    if (m.contains('upi')) return Icons.qr_code_2_rounded;
+    if (m.contains('bank') || m.contains('net')) return Icons.account_balance_rounded;
+    if (m.contains('cheque')) return Icons.description_outlined;
+    return Icons.payment_rounded;
+  }
+
+  Color _colorForMethod(String method) {
+    final m = method.toLowerCase();
+    if (m.contains('gpay') || m.contains('google')) return const Color(0xFF1A73E8);
+    if (m.contains('phonepe') || m.contains('phone pe')) return const Color(0xFF5F259F);
+    if (m.contains('paytm')) return const Color(0xFF0284C7);
+    if (m.contains('cash')) return const Color(0xFF059669);
+    if (m.contains('card')) return const Color(0xFF2563EB);
+    if (m.contains('split')) return const Color(0xFF7C3AED);
+    if (m.contains('upi')) return const Color(0xFFEA580C);
+    if (m.contains('bank') || m.contains('net')) return const Color(0xFF475569);
+    if (m.contains('cheque')) return const Color(0xFF7C3AED);
+    return const Color(0xFF059669);
   }
 
   Widget _pill(String label, Color color, IconData icon) {

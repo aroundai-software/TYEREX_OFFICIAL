@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
 import '../../widgets/app_cached_image.dart';
+import '../../utils/file_download_helper.dart';
 
 class WarrantyDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> job;
@@ -40,6 +41,32 @@ class WarrantyDetailsScreen extends StatelessWidget {
     }
   }
 
+  String _getExportPrefix() {
+    String clean(dynamic val) {
+      if (val == null) return '';
+      return val.toString().trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    }
+
+    final vehicleNo = clean(job['vehicles']?['Vehicle Number'] ?? job['vehicle_id'] ?? job['Vehicle Number'] ?? 'Vehicle');
+    final brand = clean(job['vehicles']?['vehicle_models']?['brand'] ?? job['vehicle_brand'] ?? job['brand'] ?? '');
+    final model = clean(job['vehicles']?['vehicle_models']?['Model name'] ?? job['vehicle_model'] ?? job['model'] ?? '');
+    final owner = clean(job['Owner name'] ?? job['client_name'] ?? job['owner_name'] ?? job['owner_master']?['Name'] ?? '');
+
+    final parts = <String>[];
+    if (vehicleNo.isNotEmpty) parts.add(vehicleNo);
+    if (brand.isNotEmpty) parts.add(brand);
+    if (model.isNotEmpty) parts.add(model);
+
+    String name = parts.join('_');
+    if (name.isEmpty) name = 'Warranty';
+
+    if (owner.isNotEmpty) {
+      name = '$name($owner)';
+    }
+
+    return name;
+  }
+
   Future<void> _downloadImages(BuildContext context) async {
     showDialog(
       context: context,
@@ -52,7 +79,8 @@ class WarrantyDetailsScreen extends StatelessWidget {
 
     try {
       final archive = Archive();
-      final String vehicleNo = (job['vehicles']?['Vehicle Number']?.toString() ?? job['vehicle_id']?.toString() ?? 'unknown').replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+      final String prefix = _getExportPrefix();
+      final String vehicleNo = prefix;
 
       final qrFutures = barcodeData.entries.map((entry) async {
         final position = entry.key;
@@ -127,22 +155,50 @@ class WarrantyDetailsScreen extends StatelessWidget {
       }
 
       if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog before sharing
+        Navigator.pop(context); // Close loading dialog before saving
         
         if (kIsWeb) {
           final blob = html.Blob([zipData], 'application/zip');
           final url = html.Url.createObjectUrlFromBlob(blob);
           final anchor = html.AnchorElement(href: url)
-            ..setAttribute('download', '${vehicleNo}_Photos.zip')
+            ..setAttribute('download', '$prefix.zip')
             ..click();
           html.Url.revokeObjectUrl(url);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Downloading photos ZIP...'), backgroundColor: Colors.teal),
+          );
+        } else if (FileDownloadHelper.isDesktop) {
+          final res = await FileDownloadHelper.saveZipAndFolderToDownloads(
+            zipFileName: '$prefix.zip',
+            folderName: prefix,
+            archive: archive,
+            zipBytes: zipData,
+          );
+
+          final folderPath = res['folderPath']!;
+          FileDownloadHelper.openInFileManager(folderPath);
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Saved to Downloads\\$prefix (and .zip)'),
+                backgroundColor: Colors.teal,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Open Folder',
+                  textColor: Colors.white,
+                  onPressed: () => FileDownloadHelper.openInFileManager(folderPath),
+                ),
+              ),
+            );
+          }
         } else {
           final xFile = XFile.fromData(
             Uint8List.fromList(zipData),
-            name: '${vehicleNo}_Photos.zip',
+            name: '$prefix.zip',
             mimeType: 'application/zip',
           );
-          await Share.shareXFiles([xFile], text: 'Warranty Photos for $vehicleNo');
+          await Share.shareXFiles([xFile], text: 'Warranty Photos for $prefix');
         }
       }
     } catch (e) {
@@ -247,7 +303,8 @@ class WarrantyDetailsScreen extends StatelessWidget {
         }
       }
 
-      final String vehicleNo = (job['vehicles']?['Vehicle Number']?.toString() ?? job['vehicle_id']?.toString() ?? 'unknown').replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+      final String prefix = _getExportPrefix();
+      final String vehicleNo = prefix;
 
       if (qrWidgets.isEmpty) {
         if (context.mounted) {
@@ -259,17 +316,17 @@ class WarrantyDetailsScreen extends StatelessWidget {
         return;
       }
 
+      final combinedPdf = pw.Document();
       final archive = Archive();
 
       for (int i = 0; i < qrWidgets.length; i++) {
         // Yield to the UI to keep the progress indicator spinning
         await Future.delayed(const Duration(milliseconds: 10));
         
-        final pdf = pw.Document();
         final widget = qrWidgets[i];
         
-        pdf.addPage(
-          pw.Page(
+        pw.Page buildPage() {
+          return pw.Page(
             pageFormat: PdfPageFormat.a4,
             margin: const pw.EdgeInsets.all(32),
             build: (pw.Context context) {
@@ -279,9 +336,9 @@ class WarrantyDetailsScreen extends StatelessWidget {
                   pw.Container(
                     padding: const pw.EdgeInsets.all(16),
                     margin: const pw.EdgeInsets.only(bottom: 24),
-                    decoration: pw.BoxDecoration(
+                    decoration: const pw.BoxDecoration(
                       color: PdfColors.grey100,
-                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+                      borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -324,13 +381,23 @@ class WarrantyDetailsScreen extends StatelessWidget {
                 ],
               );
             },
-          ),
-        );
-        
-        final pdfBytes = await pdf.save();
-        final fileName = '${vehicleNo}_${qrNames[i]}.pdf';
-        archive.addFile(ArchiveFile(fileName, pdfBytes.length, pdfBytes)..compress = false);
+          );
+        }
+
+        // Add page to the combined multi-page PDF document
+        combinedPdf.addPage(buildPage());
+
+        // Also add individual page PDF to archive
+        final singlePdf = pw.Document();
+        singlePdf.addPage(buildPage());
+        final singlePdfBytes = await singlePdf.save();
+        final fileName = '${prefix}_${qrNames[i]}.pdf';
+        archive.addFile(ArchiveFile(fileName, singlePdfBytes.length, singlePdfBytes)..compress = false);
       }
+
+      final combinedPdfBytes = await combinedPdf.save();
+      // Add the combined full PDF into the archive as well
+      archive.addFile(ArchiveFile('${prefix}_Warranty.pdf', combinedPdfBytes.length, combinedPdfBytes)..compress = false);
 
       final zipData = ZipEncoder().encode(archive);
       if (zipData == null) {
@@ -338,22 +405,62 @@ class WarrantyDetailsScreen extends StatelessWidget {
       }
 
       if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog before sharing
+        Navigator.pop(context); // Close loading dialog before saving
         
         if (kIsWeb) {
-          final blob = html.Blob([zipData], 'application/zip');
+          final blob = html.Blob([combinedPdfBytes], 'application/pdf');
           final url = html.Url.createObjectUrlFromBlob(blob);
           final anchor = html.AnchorElement(href: url)
-            ..setAttribute('download', '$vehicleNo.zip')
+            ..setAttribute('download', '${prefix}_Warranty.pdf')
             ..click();
           html.Url.revokeObjectUrl(url);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Downloading Warranty PDF...'), backgroundColor: Colors.blue),
+          );
+        } else if (FileDownloadHelper.isDesktop) {
+          // 1. Save the main combined Warranty PDF directly to Downloads
+          final pdfPath = await FileDownloadHelper.saveFileToDownloads(
+            fileName: '${prefix}_Warranty.pdf',
+            bytes: combinedPdfBytes,
+          );
+
+          // 2. Also save ZIP and individual PDFs folder to Downloads
+          await FileDownloadHelper.saveZipAndFolderToDownloads(
+            zipFileName: '${prefix}_PDFs.zip',
+            folderName: '${prefix}_PDFs',
+            archive: archive,
+            zipBytes: zipData,
+          );
+
+          // Select the combined PDF in File Explorer
+          FileDownloadHelper.openInFileManager(pdfPath);
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Saved Warranty PDF & PDFs to Downloads'),
+                backgroundColor: Colors.blue,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Open PDF',
+                  textColor: Colors.white,
+                  onPressed: () => FileDownloadHelper.openInFileManager(pdfPath),
+                ),
+              ),
+            );
+          }
         } else {
-          final xFile = XFile.fromData(
+          final xFilePdf = XFile.fromData(
+            combinedPdfBytes,
+            name: '${prefix}_Warranty.pdf',
+            mimeType: 'application/pdf',
+          );
+          final xFileZip = XFile.fromData(
             Uint8List.fromList(zipData),
-            name: '$vehicleNo.zip',
+            name: '$prefix.zip',
             mimeType: 'application/zip',
           );
-          await Share.shareXFiles([xFile], text: 'Warranty QRs for $vehicleNo');
+          await Share.shareXFiles([xFilePdf, xFileZip], text: 'Warranty QRs for $prefix');
         }
       }
 
